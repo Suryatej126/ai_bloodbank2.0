@@ -4,7 +4,7 @@ import { api } from "../services/api";
 
 export const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: str }>>([
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([
     { role: "assistant", content: "Hello! I am your AI Blood Bank Assistant. How can I help you today? You can type a question, select a popular topic below, or click the mic to speak to me!" }
   ]);
   const [input, setInput] = useState("");

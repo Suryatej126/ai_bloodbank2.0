@@ -3,6 +3,7 @@ import math
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+import requests
 import joblib
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
@@ -374,6 +375,47 @@ def run_chatbot_query(query, current_user_role="guest"):
     """
     AI Chatbot engine. Handles blood queries, eligibility inquiries, and donor support.
     """
+    # 1. Check if Gemini API key is configured
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if gemini_api_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+            headers = {"Content-Type": "application/json"}
+            system_instruction = (
+                "You are Life Care AI, the official intelligent assistant for the AI Powered Digital Blood Bank. "
+                "You must help users with queries regarding blood donation eligibility, compatibility maps, "
+                "emergency SOS broadcasts, and how to schedule donations. "
+                "Keep responses concise, friendly, and clinical. Make sure to reference that users can use "
+                "the dynamic eligibility check and emergency request forms on the platform."
+            )
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": f"User Role: {current_user_role}\nUser Query: {query}"}
+                        ]
+                    }
+                ],
+                "systemInstruction": {
+                    "parts": [
+                        {"text": system_instruction}
+                    ]
+                }
+            }
+            response = requests.post(url, headers=headers, json=payload, timeout=8)
+            if response.status_code == 200:
+                data = response.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text_response = parts[0].get("text", "")
+                        if text_response.strip():
+                            return text_response.strip()
+        except Exception as e:
+            print(f"Error calling live Gemini API chatbot: {e}")
+
+    # Fallback to local rule-based chatbot if API key is missing or call fails
     q = query.lower()
     
     # Check for basic greetings

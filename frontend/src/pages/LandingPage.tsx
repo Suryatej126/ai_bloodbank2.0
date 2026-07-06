@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, ShieldCheck, HeartHandshake, Brain, Clock, MapPin, ChevronRight, Award, Play, Droplet } from "lucide-react";
+import { Activity, ShieldCheck, HeartHandshake, Brain, Clock, MapPin, ChevronRight, Award, Play, Droplet, Heart, AlertCircle, CheckCircle2, X, Loader2 } from "lucide-react";
+import { api } from "../services/api";
 
 let hasPlayedSessionIntro = false;
 
@@ -10,6 +11,110 @@ export const LandingPage: React.FC = () => {
   const [showIntro, setShowIntro] = useState(!hasPlayedSessionIntro);
   const [isMuted, setIsMuted] = useState(true);
   const [fadeClass, setFadeClass] = useState("opacity-100");
+
+  // Modals state
+  const [isDonateOpen, setIsDonateOpen] = useState(false);
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [isSosChoiceOpen, setIsSosChoiceOpen] = useState(false);
+
+  // Donate Form State
+  const [donateName, setDonateName] = useState("");
+  const [donateBloodGroup, setDonateBloodGroup] = useState("O-");
+  const [donateAge, setDonateAge] = useState("");
+  const [donateWeight, setDonateWeight] = useState("");
+  const [donateHemoglobin, setDonateHemoglobin] = useState("");
+  const [donateLastDonation, setDonateLastDonation] = useState("");
+  const [donateConditions, setDonateConditions] = useState(false);
+  const [donateLoading, setDonateLoading] = useState(false);
+  const [donateResult, setDonateResult] = useState<any>(null);
+
+  // Request Form State
+  const [requestName, setRequestName] = useState("");
+  const [requestBloodGroup, setRequestBloodGroup] = useState("O-");
+  const [unitsRequired, setUnitsRequired] = useState("1");
+  const [emergencyType, setEmergencyType] = useState("urgent");
+  const [hospitalName, setHospitalName] = useState("");
+  const [hospitalAddress, setHospitalAddress] = useState("");
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [requestResult, setRequestResult] = useState<any>(null);
+  const [recommendedDonors, setRecommendedDonors] = useState<any[]>([]);
+
+  const handleDonateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDonateLoading(true);
+    setDonateResult(null);
+    try {
+      const res = await api.checkEligibility({
+        age: parseInt(donateAge) || 0,
+        weight: parseFloat(donateWeight) || 0,
+        hemoglobin: parseFloat(donateHemoglobin) || 0,
+        last_donation_months: parseInt(donateLastDonation) || 0,
+        has_medical_conditions: donateConditions
+      });
+      setDonateResult(res);
+    } catch (err) {
+      setDonateResult({
+        is_eligible: false,
+        reason: "Failed to check eligibility. Please ensure all values are correct."
+      });
+    } finally {
+      setDonateLoading(false);
+    }
+  };
+
+  const handleRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRequestLoading(true);
+    setRequestResult(null);
+    setRecommendedDonors([]);
+    try {
+      const res = await api.createRequest({
+        recipient_name: requestName,
+        blood_group: requestBloodGroup,
+        units_required: parseFloat(unitsRequired) || 1,
+        emergency_type: emergencyType,
+        hospital_name: hospitalName,
+        address: hospitalAddress
+      });
+      
+      const donors = await api.getDonorRecommendations(res.id);
+      
+      setTimeout(() => {
+        setRequestResult(res);
+        setRecommendedDonors(donors);
+        setRequestLoading(false);
+      }, 1500);
+      
+    } catch (err) {
+      setRequestResult({
+        error: true,
+        message: "Failed to submit blood request. Please check the network."
+      });
+      setRequestLoading(false);
+    }
+  };
+
+  const resetDonateForm = () => {
+    setDonateName("");
+    setDonateBloodGroup("O-");
+    setDonateAge("");
+    setDonateWeight("");
+    setDonateHemoglobin("");
+    setDonateLastDonation("");
+    setDonateConditions(false);
+    setDonateResult(null);
+  };
+
+  const resetRequestForm = () => {
+    setRequestName("");
+    setRequestBloodGroup("O-");
+    setUnitsRequired("1");
+    setEmergencyType("urgent");
+    setHospitalName("");
+    setHospitalAddress("");
+    setRequestResult(null);
+    setRecommendedDonors([]);
+  };
 
   const handleSkipIntro = () => {
     setFadeClass("opacity-0 transition-opacity duration-1000");
@@ -106,6 +211,13 @@ export const LandingPage: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <button 
+            onClick={() => setIsSosChoiceOpen(true)}
+            className="px-4 py-2 rounded-xl text-xs font-black bg-red-600 hover:bg-red-500 text-white border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_20px_rgba(220,38,38,0.7)] transition-all duration-300 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+          >
+            <AlertCircle size={14} />
+            SOS Emergency
+          </button>
+          <button 
             onClick={() => navigate("/login")}
             className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-900 text-slate-300 hover:text-white transition-all cursor-pointer"
           >
@@ -141,18 +253,25 @@ export const LandingPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-4">
             <button 
-              onClick={() => navigate("/login")}
-              className="flex items-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer"
+              onClick={() => {
+                resetDonateForm();
+                setIsDonateOpen(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
-              Access Dashboard
-              <ChevronRight size={18} />
+              <Heart size={18} className="fill-white" />
+              Quick Donate Blood
             </button>
-            <a 
-              href="#compatibility"
-              className="px-6 py-3.5 border border-slate-800 bg-slate-900/40 hover:bg-slate-900 rounded-2xl font-bold text-slate-300 hover:text-white transition-all cursor-pointer"
+            <button 
+              onClick={() => {
+                resetRequestForm();
+                setIsRequestOpen(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3.5 border border-slate-800 bg-slate-900/40 hover:bg-slate-900 rounded-2xl font-bold text-slate-300 hover:text-white transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
-              Explore Compatibility
-            </a>
+              <Droplet size={18} className="text-rose-500" />
+              Request Blood
+            </button>
           </div>
 
           {/* Stats Bar */}
@@ -269,6 +388,477 @@ export const LandingPage: React.FC = () => {
       <footer className="border-t border-slate-900 py-6 text-center text-[10px] text-slate-600 bg-slate-950/40">
         &copy; {new Date().getFullYear()} AI Powered Digital Blood Bank. Designed for Final Year B.Tech Academic Showcase.
       </footer>
+
+      {/* ================= QUICK DONATE MODAL ================= */}
+      {isDonateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200 my-8">
+            <button
+              onClick={() => setIsDonateOpen(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-800/50 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl">
+                <Heart className="fill-rose-500" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-100">Quick Donate Blood</h3>
+                <p className="text-xs text-slate-400">Register as a simulated donor and check eligibility.</p>
+              </div>
+            </div>
+
+            {!donateResult ? (
+              <form onSubmit={handleDonateSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={donateName}
+                    onChange={(e) => setDonateName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Blood Group</label>
+                    <select
+                      value={donateBloodGroup}
+                      onChange={(e) => setDonateBloodGroup(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                    >
+                      {Object.keys(compatibilities).map((group) => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Age</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="120"
+                      value={donateAge}
+                      onChange={(e) => setDonateAge(e.target.value)}
+                      placeholder="e.g. 25"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Weight (kg)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={donateWeight}
+                      onChange={(e) => setDonateWeight(e.target.value)}
+                      placeholder="e.g. 68"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hb Level</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      min="1"
+                      value={donateHemoglobin}
+                      onChange={(e) => setDonateHemoglobin(e.target.value)}
+                      placeholder="e.g. 13.5"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 tracking-wider mb-2 leading-none uppercase">Last Donated</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={donateLastDonation}
+                      onChange={(e) => setDonateLastDonation(e.target.value)}
+                      placeholder="Months ago"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
+                  <input
+                    type="checkbox"
+                    id="conditions"
+                    checked={donateConditions}
+                    onChange={(e) => setDonateConditions(e.target.checked)}
+                    className="mt-1 accent-rose-600 rounded"
+                  />
+                  <label htmlFor="conditions" className="text-xs text-slate-400 leading-normal select-none">
+                    I have pre-existing medical conditions (e.g. hypertension, diabetes, recent surgeries, chronic diseases)
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={donateLoading}
+                  className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {donateLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Analyzing Health Profile...
+                    </>
+                  ) : (
+                    "Register & Check Eligibility"
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <div className={`p-5 rounded-2xl border text-center ${
+                  donateResult.is_eligible 
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                    : "bg-red-500/10 border-red-500/20 text-red-400"
+                }`}>
+                  <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-current/10 mb-3">
+                    {donateResult.is_eligible ? (
+                      <CheckCircle2 size={28} className="text-emerald-400" />
+                    ) : (
+                      <AlertCircle size={28} className="text-red-400" />
+                    )}
+                  </div>
+                  <h4 className="text-lg font-black uppercase tracking-wide">
+                    {donateResult.is_eligible ? "Safe to Donate" : "Temporarily Deferred"}
+                  </h4>
+                  <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                    {donateResult.reason}
+                  </p>
+                  {donateResult.is_eligible && (
+                    <div className="mt-2 text-xs text-slate-400">
+                      AI Health Score: <span className="font-bold text-emerald-400">{donateResult.score}%</span>
+                    </div>
+                  )}
+                </div>
+
+                {donateResult.is_eligible && (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-rose-400">Your Blood Group Compatibilities:</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      As an <span className="font-bold text-slate-200">{donateBloodGroup}</span> donor, your blood can help recipients with:{" "}
+                      <span className="font-bold text-emerald-400">{compatibilities[donateBloodGroup].join(", ")}</span>.
+                    </p>
+                  </div>
+                )}
+
+                <div className="p-4 bg-slate-950/40 border border-slate-900 rounded-2xl text-xs text-slate-400 text-center">
+                  {donateResult.is_eligible ? (
+                    <p>
+                      🎉 Mock Donor registration successful for <strong>{donateName}</strong>! To claim achievement badges and schedule real donation slots, please register a complete account.
+                    </p>
+                  ) : (
+                    <p>
+                      Donating blood is subject to strict safety regulations. If you feel this was a mistake or your indicators have improved, you can recheck at any time.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      resetDonateForm();
+                    }}
+                    className="flex-1 py-3 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-2xl text-slate-300 hover:text-slate-100 font-bold transition-all cursor-pointer"
+                  >
+                    Reset Form
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsDonateOpen(false);
+                      if (donateResult.is_eligible) {
+                        navigate("/login?mode=register");
+                      }
+                    }}
+                    className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white font-bold transition-all cursor-pointer shadow-lg shadow-rose-600/20"
+                  >
+                    {donateResult.is_eligible ? "Sign Up As Donor" : "Close Window"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= REQUEST BLOOD MODAL ================= */}
+      {isRequestOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200 my-8">
+            <button
+              onClick={() => setIsRequestOpen(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-800/50 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl">
+                <Droplet className="fill-rose-500 text-rose-500" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-100">Quick Request Blood</h3>
+                <p className="text-xs text-slate-400">Broadcast a simulated emergency blood request immediately.</p>
+              </div>
+            </div>
+
+            {!requestResult ? (
+              <form onSubmit={handleRequestSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Recipient Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={requestName}
+                    onChange={(e) => setRequestName(e.target.value)}
+                    placeholder="Patient's name"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Blood Group</label>
+                    <select
+                      value={requestBloodGroup}
+                      onChange={(e) => setRequestBloodGroup(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                    >
+                      {Object.keys(compatibilities).map((group) => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Units (bags)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="10"
+                      value={unitsRequired}
+                      onChange={(e) => setUnitsRequired(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Urgency</label>
+                    <select
+                      value={emergencyType}
+                      onChange={(e) => setEmergencyType(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-rose-500 transition-colors"
+                    >
+                      <option value="routine">Routine</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Compatibility Explorer (embedded directly under blood group select) */}
+                <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1.5 flex items-center gap-1.5">
+                    <Activity size={12} />
+                    Compatibility Explorer for {requestBloodGroup} Recipient
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {/* Invert compatibilities lookup: which donors can donate to recipient's group */}
+                    {Object.keys(compatibilities).filter(donorBg => compatibilities[donorBg].includes(requestBloodGroup)).map((donorBg) => (
+                      <span
+                        key={donorBg}
+                        className="px-2 py-0.5 text-[10px] font-black rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      >
+                        {donorBg}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[9px] text-slate-500 mt-2 leading-normal">
+                    {requestBloodGroup === "O-" ? (
+                      "Universal Donor group needed. O- recipients can ONLY receive O- blood."
+                    ) : requestBloodGroup === "AB+" ? (
+                      "Universal Recipient group. AB+ recipients can receive blood from ALL donor groups."
+                    ) : (
+                      `The matching engine will filter and notify compatible local donors (${Object.keys(compatibilities).filter(donorBg => compatibilities[donorBg].includes(requestBloodGroup)).join(", ")}) based on physical proximity.`
+                    )}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hospital Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={hospitalName}
+                      onChange={(e) => setHospitalName(e.target.value)}
+                      placeholder="e.g. City Hospital"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hospital Address</label>
+                    <input
+                      type="text"
+                      required
+                      value={hospitalAddress}
+                      onChange={(e) => setHospitalAddress(e.target.value)}
+                      placeholder="e.g. Kakinada, AP"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={requestLoading}
+                  className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {requestLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      AI Matcher Ranking Donors...
+                    </>
+                  ) : (
+                    "Broadcast Emergency SOS Request"
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="p-5 rounded-2xl border text-center bg-emerald-500/10 border-emerald-500/20 text-emerald-400">
+                  <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-emerald-500/20 mb-3 animate-pulse">
+                    <Activity size={28} className="text-emerald-400" />
+                  </div>
+                  <h4 className="text-lg font-black uppercase tracking-wide">
+                    SOS Request Broadcasted!
+                  </h4>
+                  <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                    AI priority score computed: <span className="font-bold text-rose-400">{requestResult.priority_score}%</span>. SMS stubs and push alerts have been sent to eligible matching donors.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">AI Donor Recommendations:</h5>
+                  <div className="space-y-2">
+                    {recommendedDonors.map((donor, idx) => (
+                      <div key={idx} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div>
+                          <div className="font-bold text-slate-100 flex items-center gap-2">
+                            {donor.full_name}
+                            <span className="px-1.5 py-0.2 bg-rose-500/15 text-rose-400 border border-rose-500/10 rounded font-black text-[10px]">{donor.blood_group}</span>
+                          </div>
+                          <div className="text-slate-500 text-[10px] mt-1">
+                            📍 {donor.distance_km} km away ({donor.travel_time_mins} mins transit)
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-black text-rose-400 text-sm">{Math.round(donor.overall_score)}%</div>
+                          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Match Score</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-500 text-center leading-normal">
+                  To view live maps routing, track donor acceptances, or cancel request, please register a Patient account.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      resetRequestForm();
+                    }}
+                    className="flex-1 py-3 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-2xl text-slate-300 hover:text-slate-100 font-bold transition-all cursor-pointer"
+                  >
+                    New Request
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsRequestOpen(false);
+                      navigate("/login?mode=register");
+                    }}
+                    className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white font-bold transition-all cursor-pointer shadow-lg shadow-rose-600/20"
+                  >
+                    Register as Patient
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= SOS CHOICE MODAL ================= */}
+      {isSosChoiceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="bg-slate-900 border border-red-900/40 rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200 my-8">
+            <button
+              onClick={() => setIsSosChoiceOpen(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-800/50 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="mx-auto w-14 h-14 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/20 animate-pulse">
+                <AlertCircle size={32} className="text-red-500 animate-bounce" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-100 uppercase tracking-tight">SOS Emergency Portal</h3>
+              <p className="text-xs text-slate-400 mt-2">
+                Connect with the AI smart blood network instantly. Choose your emergency status.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  setIsSosChoiceOpen(false);
+                  resetRequestForm();
+                  setIsRequestOpen(true);
+                }}
+                className="w-full p-5 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-lg shadow-rose-600/10 hover:shadow-rose-500/20 hover:scale-102 border border-rose-500"
+              >
+                <span className="font-extrabold text-base flex items-center gap-2">
+                  <Droplet size={18} className="fill-white text-white" />
+                  I Need Blood (Request SOS)
+                </span>
+                <span className="text-[10px] text-rose-200 font-medium">Broadcast urgent request to nearby matching donors</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsSosChoiceOpen(false);
+                  resetDonateForm();
+                  setIsDonateOpen(true);
+                }}
+                className="w-full p-5 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-slate-100 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer hover:scale-102 hover:border-emerald-500/40"
+              >
+                <span className="font-extrabold text-base flex items-center gap-2 text-emerald-400">
+                  <Heart size={18} className="fill-emerald-500 text-emerald-500" />
+                  I Want to Donate (Quick Give)
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium">Register as available donor & check eligibility status</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
