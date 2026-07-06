@@ -1,5 +1,8 @@
-// Central API service layer for AI Powered Digital Blood Bank
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api/v1";
+let rawApiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api/v1";
+if (rawApiUrl && !rawApiUrl.endsWith("/api/v1")) {
+  rawApiUrl = rawApiUrl.replace(/\/$/, "") + "/api/v1";
+}
+const API_URL = rawApiUrl;
 
 
 // Helper to get auth headers
@@ -311,7 +314,7 @@ export const api = {
           const avail = bg === "AB-" ? 1.0 : bg === "O-" ? 3.0 : 15.0;
           const deficit = Math.max(0, demand - avail);
           
-          predictions.append({
+          predictions.push({
             date: dateStr,
             blood_group: bg,
             historical_avg: Math.round(hist * 10) / 10,
