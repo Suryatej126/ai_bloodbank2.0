@@ -268,15 +268,9 @@ body {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-/* Modern Request Priority Indicator Bar Glows */
-.glow-critical-bar {
-  box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.8);
-}
-.glow-urgent-bar {
-  box-shadow: 0 0 8px 1.5px rgba(245, 158, 11, 0.7);
-}
-.glow-regular-bar {
-  box-shadow: 0 0 6px 1px rgba(59, 130, 246, 0.5);
+/* Modern Request Priority Badge Glows */
+.glow-critical-badge {
+  box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.85);
 }
 
 /* Custom Leaflet Marker Overrides */

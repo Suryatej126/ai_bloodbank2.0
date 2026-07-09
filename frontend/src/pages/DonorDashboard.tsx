@@ -1328,16 +1328,8 @@ export const DonorDashboard: React.FC = () => {
                 activeRequests.map((req) => (
                   <div
                     key={req.id}
-                    className="glass-panel p-5 pl-8 rounded-2xl border border-slate-800/80 transition-all duration-200 relative overflow-hidden bg-slate-900/20"
+                    className="glass-panel p-5 rounded-2xl border border-slate-800/80 transition-all duration-200 bg-slate-900/20"
                   >
-                    {/* Left Severity Indicator Bar (Only critical glows) */}
-                    <div className={`absolute left-3 top-3 bottom-3 w-1 rounded-full ${
-                      req.emergency_type === "critical"
-                        ? "bg-red-500 glow-critical-bar animate-pulse"
-                        : req.emergency_type === "urgent"
-                          ? "bg-amber-500"
-                          : "bg-blue-500"
-                    }`} />
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4 flex-1">
                         {/* Severity Icon */}
@@ -1353,10 +1345,12 @@ export const DonorDashboard: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-extrabold text-slate-100 text-sm">{req.recipient_name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                              req.emergency_type === "critical" ? "bg-red-500/15 text-red-500 border border-red-500/20" :
-                              req.emergency_type === "urgent" ? "bg-amber-500/15 text-amber-500 border border-amber-500/20" :
-                              "bg-blue-500/15 text-blue-500 border border-blue-500/20"
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                              req.emergency_type === "critical"
+                                ? "bg-red-600 text-white border border-red-500 glow-critical-badge animate-pulse"
+                                : req.emergency_type === "urgent"
+                                  ? "bg-amber-500/15 text-amber-500 border border-amber-500/20"
+                                  : "bg-blue-500/15 text-blue-500 border border-blue-500/20"
                             }`}>
                               {req.emergency_type}
                             </span>
