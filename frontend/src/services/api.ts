@@ -188,7 +188,29 @@ export const api = {
         { id: 3, requester_id: 12, recipient_name: "Ravi Teja", blood_group: "B+", units_required: 1.0, emergency_type: "urgent", priority_score: 65.0, status: "pending", hospital_name: "Red Cross Blood Centre Kakinada", address: "Main Road, Ramanayyapeta, Kakinada, AP 533004", latitude: 16.9743, longitude: 82.2401, created_at: new Date().toISOString() },
         { id: 4, requester_id: 15, recipient_name: "Annapurna Rao", blood_group: "A+", units_required: 2.0, emergency_type: "routine", priority_score: 38.0, status: "fulfilled", hospital_name: "Suraksha Blood Bank Kakinada", address: "Jagannaickpur, Kakinada, AP 533005", latitude: 16.9612, longitude: 82.2266, created_at: new Date().toISOString() },
       ];
+    }
+  },
 
+  getFacilities: async () => {
+    try {
+      const response = await fetch(`${API_URL}/requests/facilities`, {
+        headers: getHeaders(),
+      });
+      if (!response.ok) throw new Error("Failed to fetch facilities");
+      return response.json();
+    } catch (e) {
+      // Mock facilities fallback
+      return [
+        { id: 101, name: "City General Hospital", city: "New Delhi" },
+        { id: 102, name: "Metro Emergency Clinic", city: "New Delhi" },
+        { id: 103, name: "Red Cross Blood Bank", city: "New Delhi" },
+        { id: 104, name: "LifeSource Regional Depot", city: "New Delhi" },
+        { id: 105, name: "Government General Hospital Kakinada", city: "Kakinada" },
+        { id: 106, name: "Apollo Hospital Kakinada", city: "Kakinada" },
+        { id: 107, name: "Suraksha Blood Bank Kakinada", city: "Kakinada" },
+        { id: 108, name: "Mumbai Central Blood Bank", city: "Mumbai" },
+        { id: 109, name: "Kokilaben Hospital Clinic", city: "Mumbai" }
+      ];
     }
   },
 

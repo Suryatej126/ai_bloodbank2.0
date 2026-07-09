@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from app.core.database import get_db
 from app.core.security import get_current_user, RoleChecker
@@ -56,7 +56,7 @@ def create_blood_request(
     
     # If emergency type is critical or urgent, create alerts for all nearby eligible donors
     # For simulation, we create system notifications for matching blood group users
-    matching_donors = db.query(User).join(User.profile).filter(
+    matching_donors = db.query(User).options(joinedload(User.profile)).join(User.profile).filter(
         User.role == "donor",
         User.profile.has(blood_group=req_in.blood_group)
     ).all()
@@ -304,3 +304,19 @@ def list_donations(
     if current_user.role == "donor":
         query = query.filter(Donation.donor_id == current_user.id)
     return query.all()
+
+@router.get("/facilities", response_model=List[dict])
+def get_facilities(db: Session = Depends(get_db)):
+    # Query all users with role hospital or bloodbank
+    facilities = db.query(User).options(joinedload(User.profile)).join(User.profile).filter(
+        User.role.in_(["hospital", "bloodbank"])
+    ).all()
+    
+    result = []
+    for f in facilities:
+        result.append({
+            "id": f.id,
+            "name": f.full_name,
+            "city": f.profile.city or "New Delhi"
+        })
+    return result

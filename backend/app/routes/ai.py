@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.core.database import get_db
 from app.core.security import get_current_user, RoleChecker
@@ -30,7 +30,7 @@ def get_donor_recommendations(
         raise HTTPException(status_code=404, detail="Request not found")
         
     # Fetch all registered donors
-    donors = db.query(User).join(User.profile).filter(
+    donors = db.query(User).options(joinedload(User.profile)).join(User.profile).filter(
         User.role == "donor",
         User.profile.has(availability_status="available")
     ).all()

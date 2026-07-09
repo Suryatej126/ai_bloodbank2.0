@@ -5,6 +5,45 @@ from app.core.security import get_password_hash
 from datetime import datetime, date, timedelta
 import random
 
+def seed_extra_facilities(db: Session):
+    print("Database: Seeding extra Kakinada and Mumbai facilities...")
+    extra_users = [
+        {"email": "gg_kakinada@bloodbank.ai", "name": "Government General Hospital Kakinada", "role": "hospital", "pass": "hospital123", "phone": "+919999999920", "city": "Kakinada", "dist": "East Godavari", "state": "Andhra Pradesh", "addr": "Surya Rao Peta, Kakinada, AP 533001", "lat": 16.9823, "lon": 82.2318},
+        {"email": "apollo_kakinada@bloodbank.ai", "name": "Apollo Hospital Kakinada", "role": "hospital", "pass": "hospital123", "phone": "+919999999921", "city": "Kakinada", "dist": "East Godavari", "state": "Andhra Pradesh", "addr": "14-1-1 Hospital Rd, Kakinada, AP 533001", "lat": 16.9891, "lon": 82.2475},
+        {"email": "suraksha_kakinada@bloodbank.ai", "name": "Suraksha Blood Bank Kakinada", "role": "bloodbank", "pass": "redcross123", "phone": "+919999999922", "city": "Kakinada", "dist": "East Godavari", "state": "Andhra Pradesh", "addr": "Jagannaickpur, Kakinada, AP 533005", "lat": 16.9612, "lon": 82.2266},
+        {"email": "mumbai_central@bloodbank.ai", "name": "Mumbai Central Blood Bank", "role": "bloodbank", "pass": "redcross123", "phone": "+919999999923", "city": "Mumbai", "dist": "Mumbai City", "state": "Maharashtra", "addr": "Mumbai Central, Mumbai 400008", "lat": 18.9696, "lon": 72.8193},
+        {"email": "kokilaben_mumbai@bloodbank.ai", "name": "Kokilaben Hospital Clinic", "role": "hospital", "pass": "hospital123", "phone": "+919999999924", "city": "Mumbai", "dist": "Mumbai Suburban", "state": "Maharashtra", "addr": "Four Bungalows, Andheri West, Mumbai 400053", "lat": 19.1312, "lon": 72.8256}
+    ]
+    
+    for u in extra_users:
+        if not db.query(User).filter(User.email == u["email"]).first():
+            hashed_pass = get_password_hash(u["pass"])
+            db_user = User(
+                email=u["email"],
+                hashed_password=hashed_pass,
+                full_name=u["name"],
+                phone=u["phone"],
+                role=u["role"],
+                is_verified=True
+            )
+            db.add(db_user)
+            db.flush()
+            
+            db_profile = Profile(
+                user_id=db_user.id,
+                blood_group=None,
+                latitude=u["lat"],
+                longitude=u["lon"],
+                city=u["city"],
+                district=u["dist"],
+                state=u["state"],
+                address=u["addr"],
+                is_eligible=True
+            )
+            db.add(db_profile)
+    db.commit()
+    print("Database: Extra facilities seeded successfully.")
+
 def seed_db():
     print("Database: Running database migrations and seeding default accounts...")
     Base.metadata.create_all(bind=engine)
@@ -12,7 +51,11 @@ def seed_db():
     
     # Check if database is already seeded
     if db.query(User).first():
-        print("Database: Already seeded. Skipping.")
+        extra_seeded = db.query(User).filter(User.email == "gg_kakinada@bloodbank.ai").first()
+        if not extra_seeded:
+            seed_extra_facilities(db)
+        else:
+            print("Database: Already seeded. Skipping.")
         db.close()
         return
 
@@ -193,8 +236,11 @@ def seed_db():
         # Create standard system Audit Logs
         db_audit1 = AuditLog(action="System Seeding", details="Initial database seed and account setup completed successfully.")
         db.add(db_audit1)
-        
         db.commit()
+        
+        # Seed additional facilities
+        seed_extra_facilities(db)
+        
         print("Database: Default seed accounts, inventory, and requests seeded successfully.")
     except Exception as e:
         db.rollback()

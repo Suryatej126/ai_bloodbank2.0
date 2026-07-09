@@ -115,6 +115,15 @@ def update_user_profile(
     # Update user data
     if user_update.full_name is not None:
         current_user.full_name = user_update.full_name
+    if user_update.email is not None and user_update.email != current_user.email:
+        # Check if email is already taken
+        existing_user = db.query(User).filter(User.email == user_update.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this email already exists."
+            )
+        current_user.email = user_update.email
     if user_update.phone is not None:
         current_user.phone = user_update.phone
     if user_update.password is not None:

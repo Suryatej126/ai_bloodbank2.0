@@ -3,13 +3,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { api } from "./services/api";
 import { Sidebar } from "./components/Sidebar";
 import { Chatbot } from "./components/Chatbot";
-import { LandingPage } from "./pages/LandingPage";
-import { Login } from "./pages/Login";
-import { AdminDashboard } from "./pages/AdminDashboard";
-import { HospitalDashboard } from "./pages/HospitalDashboard";
-import { BloodBankDashboard } from "./pages/BloodBankDashboard";
-import { DonorDashboard } from "./pages/DonorDashboard";
-import { PatientDashboard } from "./pages/PatientDashboard";
+const LandingPage = React.lazy(() => import("./pages/LandingPage").then(module => ({ default: module.LandingPage })));
+const Login = React.lazy(() => import("./pages/Login").then(module => ({ default: module.Login })));
+const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard").then(module => ({ default: module.AdminDashboard })));
+const HospitalDashboard = React.lazy(() => import("./pages/HospitalDashboard").then(module => ({ default: module.HospitalDashboard })));
+const BloodBankDashboard = React.lazy(() => import("./pages/BloodBankDashboard").then(module => ({ default: module.BloodBankDashboard })));
+const DonorDashboard = React.lazy(() => import("./pages/DonorDashboard").then(module => ({ default: module.DonorDashboard })));
+const PatientDashboard = React.lazy(() => import("./pages/PatientDashboard").then(module => ({ default: module.PatientDashboard })));
 
 // Reusable Premium White-Themed Loading Animation (0.8s loop speed)
 const PremiumLoader: React.FC = () => {
@@ -150,45 +150,47 @@ export const App: React.FC = () => {
 
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route 
-          path="/" 
-          element={token ? <Navigate to={`/${role}`} replace /> : <LandingPage />} 
-        />
-        <Route 
-          path="/login" 
-          element={token ? <Navigate to={`/${role}`} replace /> : <Login onLoginSuccess={handleLoginSuccess} />} 
-        />
+      <React.Suspense fallback={<PremiumLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route 
+            path="/" 
+            element={token ? <Navigate to={`/${role}`} replace /> : <LandingPage />} 
+          />
+          <Route 
+            path="/login" 
+            element={token ? <Navigate to={`/${role}`} replace /> : <Login onLoginSuccess={handleLoginSuccess} />} 
+          />
 
-        {/* Dashboard Role-Based Routes */}
-        <Route 
-          path="/admin/*" 
-          element={<DashboardLayout><AdminDashboard /></DashboardLayout>} 
-        />
-        <Route 
-          path="/hospital/*" 
-          element={<DashboardLayout><HospitalDashboard /></DashboardLayout>} 
-        />
-        <Route 
-          path="/bloodbank/*" 
-          element={<DashboardLayout><BloodBankDashboard /></DashboardLayout>} 
-        />
-        <Route 
-          path="/donor/*" 
-          element={<DashboardLayout><DonorDashboard /></DashboardLayout>} 
-        />
-        <Route 
-          path="/patient/*" 
-          element={<DashboardLayout><PatientDashboard /></DashboardLayout>} 
-        />
+          {/* Dashboard Role-Based Routes */}
+          <Route 
+            path="/admin/*" 
+            element={<DashboardLayout><AdminDashboard /></DashboardLayout>} 
+          />
+          <Route 
+            path="/hospital/*" 
+            element={<DashboardLayout><HospitalDashboard /></DashboardLayout>} 
+          />
+          <Route 
+            path="/bloodbank/*" 
+            element={<DashboardLayout><BloodBankDashboard /></DashboardLayout>} 
+          />
+          <Route 
+            path="/donor/*" 
+            element={<DashboardLayout><DonorDashboard /></DashboardLayout>} 
+          />
+          <Route 
+            path="/patient/*" 
+            element={<DashboardLayout><PatientDashboard /></DashboardLayout>} 
+          />
 
-        {/* Fallback */}
-        <Route 
-          path="*" 
-          element={<Navigate to="/" replace />} 
-        />
-      </Routes>
+          {/* Fallback */}
+          <Route 
+            path="*" 
+            element={<Navigate to="/" replace />} 
+          />
+        </Routes>
+      </React.Suspense>
     </Router>
   );
 };
