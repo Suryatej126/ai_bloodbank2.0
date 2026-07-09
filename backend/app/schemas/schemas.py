@@ -231,3 +231,20 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+
+# ----------------- FORGOT PASSWORD & OTP SCHEMAS -----------------
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+class OtpLoginSendRequest(BaseModel):
+    email: EmailStr
+
+class OtpLoginVerifyRequest(BaseModel):
+    email: EmailStr
+    otp: str
+

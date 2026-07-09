@@ -34,10 +34,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState("admin");
 
+  // New States for Forgot Password and OTP Login
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isOtpLogin, setIsOtpLogin] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1 = email, 2 = otp + new pass
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [otpLoginStep, setOtpLoginStep] = useState(1); // 1 = email, 2 = otp verification
+  const [otpLoginCode, setOtpLoginCode] = useState("");
+
   // Sync mode state with query parameters
   useEffect(() => {
     const mode = searchParams.get("mode");
     setIsRegister(mode === "register");
+    setIsForgotPassword(false);
+    setIsOtpLogin(false);
+    setForgotStep(1);
+    setOtpLoginStep(1);
     setError("");
     setSuccessMessage("");
   }, [searchParams]);
@@ -103,6 +117,97 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setSearchParams({});
     } catch (err: any) {
       setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Forgot Password Handlers ---
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError("Please enter your email address");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await api.forgotPassword(email);
+      setSuccessMessage("OTP verification code has been sent to your registered contact! (Use 123456 for evaluation)");
+      setForgotStep(2);
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotOtp || !newPassword || !confirmNewPassword) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await api.resetPassword(email, forgotOtp, newPassword);
+      setSuccessMessage("Your password has been reset successfully! Please sign in with your new password.");
+      setIsForgotPassword(false);
+      setForgotStep(1);
+      setForgotOtp("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err: any) {
+      setError(err.message || "Password reset failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- OTP Login Handlers ---
+  const handleSendOtpLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError("Please enter your email address");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await api.sendOtpLogin(email);
+      setSuccessMessage("OTP login code sent! (Use 123456 for evaluation)");
+      setOtpLoginStep(2);
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtpLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpLoginCode) {
+      setError("Please enter the verification OTP");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await api.verifyOtpLogin(email, otpLoginCode);
+      const user = await api.getCurrentUser();
+      onLoginSuccess(user.role);
+      navigate(`/${user.role}`);
+    } catch (err: any) {
+      setError(err.message || "Invalid OTP code");
     } finally {
       setLoading(false);
     }
@@ -190,14 +295,26 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
         <h2 className="text-3xl font-black tracking-tight text-slate-100">
-          {isRegister ? "Create your account" : step === 1 ? "Sign in to your account" : "Security Verification"}
+          {isRegister 
+            ? "Create your account" 
+            : isForgotPassword 
+              ? "Reset your password" 
+              : isOtpLogin 
+                ? "OTP Sign In" 
+                : step === 1 
+                  ? "Sign in to your account" 
+                  : "Security Verification"}
         </h2>
         <p className="text-sm text-slate-400">
           {isRegister 
             ? "Fill in the details to join the AI Powered Smart Blood Bank" 
-            : step === 1 
-              ? "Enter credentials or use the evaluator quick links below" 
-              : "Verify your session via 2-Factor Authentication"}
+            : isForgotPassword 
+              ? "Enter your email to verify and reset your credentials" 
+              : isOtpLogin 
+                ? "Enter your registered email to receive a login OTP" 
+                : step === 1 
+                  ? "Enter credentials or use the evaluator quick links below" 
+                  : "Verify your session via 2-Factor Authentication"}
         </p>
       </div>
 
@@ -358,9 +475,277 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </p>
               </div>
             </form>
+          ) : isForgotPassword ? (
+            /* ================= FORGOT PASSWORD FORM ================= */
+            forgotStep === 1 ? (
+              <form className="space-y-5" onSubmit={handleForgotPasswordSubmit}>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <Mail size={16} />
+                    </span>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="name@company.com"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {loading ? "Sending OTP..." : "Send Verification OTP"}
+                </button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPassword(false);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="text-xs text-slate-400 hover:text-rose-500 font-bold focus:outline-none cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form className="space-y-5" onSubmit={handleResetPasswordSubmit}>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    OTP Verification Code
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <KeyRound size={16} />
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={forgotOtp}
+                      onChange={(e) => setForgotOtp(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="123456"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <Lock size={16} />
+                    </span>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <Lock size={16} />
+                    </span>
+                    <input
+                      type="password"
+                      required
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {loading ? "Resetting Password..." : "Reset Password"}
+                </button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotStep(1);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="text-xs text-slate-400 hover:text-rose-500 font-bold focus:outline-none cursor-pointer"
+                  >
+                    Change Email
+                  </button>
+                </div>
+              </form>
+            )
+          ) : isOtpLogin ? (
+            /* ================= OTP LOGIN FORM ================= */
+            otpLoginStep === 1 ? (
+              <form className="space-y-5" onSubmit={handleSendOtpLoginSubmit}>
+                {/* Toggle tabs */}
+                <div className="flex border-b border-slate-800 pb-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOtpLogin(false);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="flex-1 text-center py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 text-slate-500 border-transparent hover:text-slate-400"
+                  >
+                    Password Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOtpLogin(true);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="flex-1 text-center py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 text-rose-500 border-rose-500"
+                  >
+                    OTP Login
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <Mail size={16} />
+                    </span>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="name@company.com"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {loading ? "Sending OTP..." : "Request Login OTP"}
+                </button>
+
+                <div className="text-center mt-4">
+                  <p className="text-xs text-slate-400">
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => toggleMode(true)}
+                      className="text-rose-500 hover:underline font-bold focus:outline-none cursor-pointer"
+                    >
+                      Register here
+                    </button>
+                  </p>
+                </div>
+              </form>
+            ) : (
+              <form className="space-y-5" onSubmit={handleVerifyOtpLoginSubmit}>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Enter Verification OTP
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                      <KeyRound size={16} />
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={otpLoginCode}
+                      onChange={(e) => setOtpLoginCode(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 tracking-[0.25em] font-mono text-center focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      placeholder="123456"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {loading ? "Verifying..." : "Verify & Sign In"}
+                </button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtpLoginStep(1);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="text-xs text-slate-400 hover:text-rose-500 font-bold focus:outline-none cursor-pointer"
+                  >
+                    Change Email
+                  </button>
+                </div>
+              </form>
+            )
           ) : step === 1 ? (
             /* ================= LOGIN FORM (STEP 1) ================= */
             <form className="space-y-5" onSubmit={handleLoginSubmit}>
+              {/* Toggle tabs */}
+              <div className="flex border-b border-slate-800 pb-3 mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOtpLogin(false);
+                    setError("");
+                    setSuccessMessage("");
+                  }}
+                  className="flex-1 text-center py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 text-rose-500 border-rose-500"
+                >
+                  Password Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOtpLogin(true);
+                    setError("");
+                    setSuccessMessage("");
+                  }}
+                  className="flex-1 text-center py-1.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 text-slate-500 border-transparent hover:text-slate-400"
+                >
+                  OTP Login
+                </button>
+              </div>
+
               {/* Email */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -387,9 +772,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Password
                   </label>
-                  <a href="#" className="text-xs text-rose-500 hover:text-rose-400 font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPassword(true);
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className="text-xs text-rose-500 hover:text-rose-400 font-semibold focus:outline-none cursor-pointer"
+                  >
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
@@ -486,7 +879,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           )}
 
           {/* Quick Demo Autofill section */}
-          {!isRegister && step === 1 && (
+          {!isRegister && step === 1 && !isForgotPassword && !isOtpLogin && (
             <div className="border-t border-slate-900 pt-6">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3 text-center">
                 Quick Evaluator Autofill

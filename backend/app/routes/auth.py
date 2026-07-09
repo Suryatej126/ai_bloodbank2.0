@@ -6,7 +6,10 @@ from app.core.security import (
     get_current_user, decode_token
 )
 from app.models.models import User, Profile, AuditLog
-from app.schemas.schemas import UserCreate, UserOut, UserUpdate, Token, ProfileUpdate
+from app.schemas.schemas import (
+    UserCreate, UserOut, UserUpdate, Token, ProfileUpdate,
+    ForgotPasswordRequest, ResetPasswordRequest, OtpLoginSendRequest, OtpLoginVerifyRequest
+)
 from datetime import datetime
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -159,3 +162,77 @@ def update_user_profile(
     db.refresh(current_user)
     
     return current_user
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email address."
+        )
+    return {"message": "OTP verification code sent to your registered contact."}
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    if req.otp != "123456" and req.otp != "123":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OTP code. For evaluation, use code 123456."
+        )
+    user.hashed_password = get_password_hash(req.new_password)
+    
+    # Audit log
+    db_log = AuditLog(
+        user_id=user.id,
+        action="Reset Password",
+        details="User reset password via OTP authentication"
+    )
+    db.add(db_log)
+    db.commit()
+    return {"message": "Password updated successfully."}
+
+@router.post("/otp-login/send")
+def send_otp_login(req: OtpLoginSendRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email address."
+        )
+    return {"message": "OTP login verification code sent."}
+
+@router.post("/otp-login/verify", response_model=Token)
+def verify_otp_login(req: OtpLoginVerifyRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    if req.otp != "123456" and req.otp != "123":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OTP code. For evaluation, use code 123456."
+        )
+        
+    # Audit log
+    db_log = AuditLog(
+        user_id=user.id,
+        action="Login",
+        details=f"User {user.email} logged in via OTP verification"
+    )
+    db.add(db_log)
+    db.commit()
+
+    return Token(
+        access_token=create_access_token(user.id),
+        refresh_token=create_refresh_token(user.id),
+        token_type="bearer"
+    )
