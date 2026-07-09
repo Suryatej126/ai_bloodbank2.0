@@ -316,6 +316,7 @@ export const DonorDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "info" } | null>(null);
 
   // Appointments schedule form states
   const [selectedCenter, setSelectedCenter] = useState("");
@@ -436,6 +437,12 @@ export const DonorDashboard: React.FC = () => {
   useEffect(() => {
     loadDonorData();
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
@@ -1376,7 +1383,15 @@ export const DonorDashboard: React.FC = () => {
                       {/* CTA buttons */}
                       <div className="flex flex-col gap-2 flex-shrink-0">
                         <button
-                          onClick={() => alert(`🩸 Response confirmed! The hospital ${req.hospital_name} has been notified that you are on your way. Safe travels, hero!`)}
+                          onClick={() => {
+                            setToast({
+                              message: `🩸 Response confirmed! The hospital ${req.hospital_name} has been notified that you are on your way. Safe travels, hero!`,
+                              type: "success"
+                            });
+                            setTimeout(() => {
+                              setActiveRequests(prev => prev.filter(r => r.id !== req.id));
+                            }, 1000);
+                          }}
                           className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/20"
                         >
                           Respond Now
@@ -1438,6 +1453,16 @@ export const DonorDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification Overlay */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 p-4 rounded-2xl border border-rose-500/20 bg-slate-900/90 text-slate-100 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300">
+          <div className="p-1.5 bg-rose-600/10 rounded-lg text-rose-500 animate-pulse">
+            <CheckCircle size={16} />
+          </div>
+          <span className="text-xs font-semibold">{toast.message}</span>
         </div>
       )}
     </div>
