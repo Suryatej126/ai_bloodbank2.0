@@ -3,13 +3,32 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { api } from "./services/api";
 import { Sidebar } from "./components/Sidebar";
 import { Chatbot } from "./components/Chatbot";
-const LandingPage = React.lazy(() => import("./pages/LandingPage").then(module => ({ default: module.LandingPage })));
-const Login = React.lazy(() => import("./pages/Login").then(module => ({ default: module.Login })));
-const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard").then(module => ({ default: module.AdminDashboard })));
-const HospitalDashboard = React.lazy(() => import("./pages/HospitalDashboard").then(module => ({ default: module.HospitalDashboard })));
-const BloodBankDashboard = React.lazy(() => import("./pages/BloodBankDashboard").then(module => ({ default: module.BloodBankDashboard })));
-const DonorDashboard = React.lazy(() => import("./pages/DonorDashboard").then(module => ({ default: module.DonorDashboard })));
-const PatientDashboard = React.lazy(() => import("./pages/PatientDashboard").then(module => ({ default: module.PatientDashboard })));
+// Safe dynamic import loader wrapper to handle deployment updates/chunk load failures
+const safeLazy = (importFn: () => Promise<any>) => {
+  return React.lazy(async () => {
+    try {
+      return await importFn();
+    } catch (error) {
+      console.error("Failed to load dynamic chunk, forcing page reload...", error);
+      const lastReload = sessionStorage.getItem("spa_chunk_reload");
+      const now = Date.now();
+      // Only reload if we haven't reloaded in the last 10 seconds to prevent loops
+      if (!lastReload || now - parseInt(lastReload) > 10000) {
+        sessionStorage.setItem("spa_chunk_reload", now.toString());
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+};
+
+const LandingPage = safeLazy(() => import("./pages/LandingPage").then(module => ({ default: module.LandingPage })));
+const Login = safeLazy(() => import("./pages/Login").then(module => ({ default: module.Login })));
+const AdminDashboard = safeLazy(() => import("./pages/AdminDashboard").then(module => ({ default: module.AdminDashboard })));
+const HospitalDashboard = safeLazy(() => import("./pages/HospitalDashboard").then(module => ({ default: module.HospitalDashboard })));
+const BloodBankDashboard = safeLazy(() => import("./pages/BloodBankDashboard").then(module => ({ default: module.BloodBankDashboard })));
+const DonorDashboard = safeLazy(() => import("./pages/DonorDashboard").then(module => ({ default: module.DonorDashboard })));
+const PatientDashboard = safeLazy(() => import("./pages/PatientDashboard").then(module => ({ default: module.PatientDashboard })));
 
 // Reusable Premium White-Themed Loading Animation (0.8s loop speed)
 const PremiumLoader: React.FC = () => {
