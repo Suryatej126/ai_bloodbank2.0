@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../services/api";
 import { 
@@ -71,6 +71,240 @@ const SkeletonRequests: React.FC = () => (
   </div>
 );
 
+// Leaflet CSS and JS CDN loader helper
+const loadLeaflet = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).L) {
+      resolve((window as any).L);
+      return;
+    }
+    
+    // Inject Leaflet CSS
+    const cssId = "leaflet-cdn-css";
+    if (!document.getElementById(cssId)) {
+      const link = document.createElement("link");
+      link.id = cssId;
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+
+    // Inject Leaflet JS script
+    const scriptId = "leaflet-cdn-js";
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = () => resolve((window as any).L);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    } else {
+      const interval = setInterval(() => {
+        if ((window as any).L) {
+          clearInterval(interval);
+          resolve((window as any).L);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(interval);
+        if (!(window as any).L) reject(new Error("Leaflet script failed to load"));
+      }, 10000);
+    }
+  });
+};
+
+interface MapPickerProps {
+  lat: string;
+  lng: string;
+  onChange: (lat: number, lng: number, addressDetails?: any) => void;
+}
+
+const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const [loadingMap, setLoadingMap] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const initialLat = parseFloat(lat) || 16.9823;
+  const initialLng = parseFloat(lng) || 82.2318;
+
+  useEffect(() => {
+    let active = true;
+    let mapInstance: any = null;
+
+    loadLeaflet().then((L) => {
+      if (!active) return;
+      setLoadingMap(false);
+
+      if (!mapContainerRef.current) return;
+
+      mapInstance = L.map(mapContainerRef.current).setView([initialLat, initialLng], 13);
+      mapRef.current = mapInstance;
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(mapInstance);
+
+      // Custom red glowing pulse marker icon
+      const customIcon = L.divIcon({
+        className: "custom-leaflet-marker",
+        html: `<div class="relative w-8 h-8 flex items-center justify-center">
+                 <div class="absolute w-8 h-8 rounded-full bg-rose-500/40 animate-ping"></div>
+                 <div class="relative w-4 h-4 bg-rose-600 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+                   <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                 </div>
+               </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      const marker = L.marker([initialLat, initialLng], {
+        icon: customIcon,
+        draggable: true
+      }).addTo(mapInstance);
+      markerRef.current = marker;
+
+      // Handle map clicks
+      mapInstance.on("click", (e: any) => {
+        const { lat: clickLat, lng: clickLng } = e.latlng;
+        marker.setLatLng([clickLat, clickLng]);
+        triggerChange(clickLat, clickLng);
+      });
+
+      // Handle marker drag
+      marker.on("dragend", () => {
+        const position = marker.getLatLng();
+        triggerChange(position.lat, position.lng);
+      });
+
+    }).catch((err) => {
+      console.error(err);
+      if (active) setErrorMsg("Failed to load map canvas.");
+    });
+
+    const triggerChange = async (newLat: number, newLng: number) => {
+      let addressDetails = null;
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLat}&lon=${newLng}&zoom=18&addressdetails=1`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.address) {
+            addressDetails = {
+              street: data.address.road || data.address.suburb || data.display_name.split(",")[0] || "",
+              city: data.address.city || data.address.town || data.address.village || data.address.county || "",
+              district: data.address.state_district || data.address.county || "",
+              state: data.address.state || "",
+              full_address: data.display_name || ""
+            };
+          }
+        }
+      } catch (err) {
+        console.error("Reverse geocoding failed", err);
+      }
+      onChange(newLat, newLng, addressDetails);
+    };
+
+    return () => {
+      active = false;
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+    };
+  }, []);
+
+  // Update marker position from parent changes (like Geolocation API)
+  useEffect(() => {
+    if (mapRef.current && markerRef.current && lat && lng) {
+      const parsedLat = parseFloat(lat);
+      const parsedLng = parseFloat(lng);
+      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+        const currentLatLng = markerRef.current.getLatLng();
+        if (Math.abs(currentLatLng.lat - parsedLat) > 0.0001 || Math.abs(currentLatLng.lng - parsedLng) > 0.0001) {
+          markerRef.current.setLatLng([parsedLat, parsedLng]);
+          mapRef.current.setView([parsedLat, parsedLng], 14);
+        }
+      }
+    }
+  }, [lat, lng]);
+
+  const handleLocateMe = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          if (mapRef.current && markerRef.current) {
+            markerRef.current.setLatLng([latitude, longitude]);
+            mapRef.current.setView([latitude, longitude], 14);
+            
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`)
+              .then(res => res.json())
+              .then(data => {
+                const addressDetails = data && data.address ? {
+                  street: data.address.road || data.address.suburb || data.display_name.split(",")[0] || "",
+                  city: data.address.city || data.address.town || data.address.village || data.address.county || "",
+                  district: data.address.state_district || data.address.county || "",
+                  state: data.address.state || "",
+                  full_address: data.display_name || ""
+                } : undefined;
+                onChange(latitude, longitude, addressDetails);
+              })
+              .catch(() => {
+                onChange(latitude, longitude);
+              });
+          }
+        },
+        (error) => {
+          console.error("Geolocation error", error);
+          alert("Could not access your location. Please select it manually on the map.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Location on Map</span>
+        <button
+          onClick={handleLocateMe}
+          type="button"
+          className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Locate Me
+        </button>
+      </div>
+      <div 
+        className="w-full rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden relative"
+        style={{ height: "220px" }}
+      >
+        {loadingMap && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-[1000] text-slate-500 text-xs">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-rose-500 mr-2"></div>
+            Loading Map View...
+          </div>
+        )}
+        {errorMsg && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-[1000] text-rose-400 text-xs p-4 text-center">
+            {errorMsg}
+          </div>
+        )}
+        <div ref={mapContainerRef} className="w-full h-full z-[1]" />
+      </div>
+      <p className="text-[9px] text-slate-500 leading-normal">
+        📍 Drag the marker or click on the map to pinpoint your location. Address fields will auto-fill if resolved.
+      </p>
+    </div>
+  );
+};
+
 export const DonorDashboard: React.FC = () => {
   const location = useLocation();
   const currentTab = location.pathname.split("/").filter(Boolean)[1] || "profile";
@@ -80,6 +314,8 @@ export const DonorDashboard: React.FC = () => {
   const [badges, setBadges] = useState<any[]>([]);
   const [activeRequests, setActiveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Appointments schedule form states
   const [selectedCenter, setSelectedCenter] = useState("");
@@ -134,6 +370,7 @@ export const DonorDashboard: React.FC = () => {
     setLoading(true);
     try {
       const user = await api.getCurrentUser();
+      setCurrentUser(user);
       setProfile(user.profile);
       
       // Initialize edit profile form states
@@ -342,7 +579,13 @@ export const DonorDashboard: React.FC = () => {
       
       // Reload values in backend
       const userRes = await api.getCurrentUser();
+      setCurrentUser(userRes);
       setProfile(userRes.profile);
+      
+      setTimeout(() => {
+        setIsEditing(false);
+        setUpdateStatus(null);
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       setUpdateStatus({ success: false, message: err.message || "Failed to update profile." });
@@ -369,220 +612,410 @@ export const DonorDashboard: React.FC = () => {
       {currentTab === "profile" && (
         loading ? <SkeletonProfile /> : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
-            {/* Edit Profile Form */}
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 lg:col-span-2">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
-                <User size={18} />
-                Update Donor Profile Details
-              </h3>
-              
-              {updateStatus && (
-                <div className={`p-4 rounded-xl border text-xs flex items-center gap-2 ${
-                  updateStatus.success 
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                    : "bg-red-500/10 border-red-500/20 text-red-400"
-                }`}>
-                  {updateStatus.success ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                  <span>{updateStatus.message}</span>
-                </div>
-              )}
-              
-              <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
+            {/* My Profile Details View or Edit Form */}
+            {!isEditing ? (
+              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 lg:col-span-2 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-600 to-rose-400" />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-rose-600/10 border border-rose-500/30 flex items-center justify-center text-rose-500 font-extrabold text-lg shadow-inner">
+                      {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : <User size={20} />}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
+                        {currentUser?.full_name || "Blood Donor"}
+                        {profile?.availability_status === "available" ? (
+                          <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Available
+                          </span>
+                        ) : (
+                          <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            Unavailable
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Donor ID #{currentUser?.id || 1} • {currentUser?.email}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={profileEmail}
-                      onChange={(e) => setProfileEmail(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-rose-600/20"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Profile
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div className="space-y-3.5">
+                    <h4 className="text-rose-500 font-bold uppercase tracking-wider text-[10px] pb-1 border-b border-slate-950">Health & Blood Profile</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Blood Group</span>
+                        <span className="text-sm font-black text-rose-450 mt-1 block">{profile?.blood_group || "O+"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Birth Date</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block">
+                          {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : "Not set"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Weight</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block">{profile?.weight ? `${profile.weight} kg` : "Not set"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Hemoglobin</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block">{profile?.hemoglobin ? `${profile.hemoglobin} g/dL` : "Not set"}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Phone Number</span>
+                      <span className="text-sm font-semibold text-slate-200 mt-1 block">{currentUser?.phone || "Not set"}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <h4 className="text-rose-500 font-bold uppercase tracking-wider text-[10px] pb-1 border-b border-slate-950">Residential Address</h4>
+                    <div>
+                      <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Street Address</span>
+                      <span className="text-sm font-semibold text-slate-200 mt-1 block leading-relaxed">{profile?.address || "Not set"}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">City</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.city || "Not set"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">District</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.district || "Not set"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">State</span>
+                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.state || "Not set"}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Latitude</span>
+                        <span className="text-xs font-mono text-slate-300 mt-1 block">{profile?.latitude || "Not set"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Longitude</span>
+                        <span className="text-xs font-mono text-slate-300 mt-1 block">{profile?.longitude || "Not set"}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Phone</label>
-                    <input
-                      type="text"
-                      value={profilePhone}
-                      onChange={(e) => setProfilePhone(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                <div className="p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2.5">
+                  <h5 className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity size={12} className="text-rose-500" />
+                    Clinical Declarations
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px]">
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
+                      <span className="text-slate-500 block text-[9px]">Medical Conditions</span>
+                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.health_conditions || "None declared"}</span>
+                    </div>
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
+                      <span className="text-slate-550 block text-[9px]">Exclusions / Vaccines</span>
+                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.vaccination_status || "None declared"}</span>
+                    </div>
+                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
+                      <span className="text-slate-550 block text-[9px]">Travel Exposure Risk</span>
+                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.travel_history || "None declared"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {profile?.latitude && profile?.longitude && (
+                  <div className="space-y-1.5">
+                    <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Pinned Location Map</span>
+                    <div className="w-full h-32 rounded-xl border border-slate-800 overflow-hidden">
+                      <iframe
+                        title="profile-location-overview"
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${(parseFloat(profile.longitude) - 0.015).toFixed(4)},${(parseFloat(profile.latitude) - 0.01).toFixed(4)},${(parseFloat(profile.longitude) + 0.015).toFixed(4)},${(parseFloat(profile.latitude) + 0.01).toFixed(4)}&layer=mapnik&marker=${profile.latitude},${profile.longitude}`}
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 lg:col-span-2">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
+                  <User size={18} />
+                  Update Donor Profile Details
+                </h3>
+                
+                {updateStatus && (
+                  <div className={`p-4 rounded-xl border text-xs flex items-center gap-2 ${
+                    updateStatus.success 
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                      : "bg-red-500/10 border-red-500/20 text-red-400"
+                  }`}>
+                    {updateStatus.success ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                    <span>{updateStatus.message}</span>
+                  </div>
+                )}
+                
+                <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Phone</label>
+                      <input
+                        type="text"
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Blood Group</label>
+                      <select
+                        value={profileBloodGroup}
+                        onChange={(e) => setProfileBloodGroup(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
+                      >
+                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                          <option key={bg} value={bg}>{bg}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Availability</label>
+                      <select
+                        value={profileAvailability}
+                        onChange={(e) => setProfileAvailability(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
+                      >
+                        <option value="available">Available</option>
+                        <option value="unavailable">Unavailable</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={profileDob}
+                        onChange={(e) => setProfileDob(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Weight (kg)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={profileWeight}
+                        onChange={(e) => setProfileWeight(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Hemoglobin (g/dL)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={profileHemoglobin}
+                        onChange={(e) => setProfileHemoglobin(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Street Address</label>
+                      <input
+                        type="text"
+                        value={profileAddress}
+                        onChange={(e) => setProfileAddress(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">City</label>
+                      <input
+                        type="text"
+                        value={profileCity}
+                        onChange={(e) => setProfileCity(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">District</label>
+                      <input
+                        type="text"
+                        value={profileDistrict}
+                        onChange={(e) => setProfileDistrict(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">State</label>
+                      <input
+                        type="text"
+                        value={profileState}
+                        onChange={(e) => setProfileState(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Latitude</label>
+                      <input
+                        type="text"
+                        value={profileLat}
+                        readOnly
+                        placeholder="Pin on map"
+                        className="block w-full px-3 py-2 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-400 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Longitude</label>
+                      <input
+                        type="text"
+                        value={profileLng}
+                        readOnly
+                        placeholder="Pin on map"
+                        className="block w-full px-3 py-2 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Interactive Map Picker Container */}
+                  <div className="p-3 bg-slate-950/30 border border-slate-900 rounded-xl">
+                    <MapPicker
+                      lat={profileLat}
+                      lng={profileLng}
+                      onChange={(latVal, lngVal, addressDetails) => {
+                        setProfileLat(latVal.toFixed(6));
+                        setProfileLng(lngVal.toFixed(6));
+                        if (addressDetails) {
+                          if (addressDetails.street) setProfileAddress(addressDetails.street);
+                          if (addressDetails.city) setProfileCity(addressDetails.city);
+                          if (addressDetails.district) setProfileDistrict(addressDetails.district);
+                          if (addressDetails.state) setProfileState(addressDetails.state);
+                        }
+                      }}
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Blood Group</label>
-                    <select
-                      value={profileBloodGroup}
-                      onChange={(e) => setProfileBloodGroup(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50 animate-fadeIn"
+
+                  <div className="space-y-2 pt-2 border-t border-slate-900">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Health Conditions</label>
+                      <input
+                        type="text"
+                        value={profileHealthConditions}
+                        onChange={(e) => setProfileHealthConditions(e.target.value)}
+                        placeholder="E.g., none, hypertension, diabetes"
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Travel History Risk</label>
+                      <input
+                        type="text"
+                        value={profileTravelHistory}
+                        onChange={(e) => setProfileTravelHistory(e.target.value)}
+                        placeholder="E.g., none, malaria-risk zones recently"
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-400 uppercase tracking-wider">Recent Vaccine Status</label>
+                      <input
+                        type="text"
+                        value={profileVaccineStatus}
+                        onChange={(e) => setProfileVaccineStatus(e.target.value)}
+                        placeholder="E.g., none, covid vaccine 5 days ago"
+                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileName(currentUser?.full_name || "");
+                        setProfileEmail(currentUser?.email || "");
+                        setProfilePhone(currentUser?.phone || "");
+                        if (profile) {
+                          setProfileBloodGroup(profile.blood_group || "O+");
+                          setProfileDob(profile.date_of_birth ? new Date(profile.date_of_birth).toISOString().split("T")[0] : "");
+                          setProfileWeight(profile.weight ? profile.weight.toString() : "");
+                          setProfileHemoglobin(profile.hemoglobin ? profile.hemoglobin.toString() : "");
+                          setProfileCity(profile.city || "");
+                          setProfileDistrict(profile.district || "");
+                          setProfileState(profile.state || "");
+                          setProfileAddress(profile.address || "");
+                          setProfileLat(profile.latitude ? profile.latitude.toString() : "");
+                          setProfileLng(profile.longitude ? profile.longitude.toString() : "");
+                          setProfileHealthConditions(profile.health_conditions || "");
+                          setProfileTravelHistory(profile.travel_history || "");
+                          setProfileVaccineStatus(profile.vaccination_status || "");
+                          setProfileAvailability(profile.availability_status || "available");
+                        }
+                        setIsEditing(false);
+                        setUpdateStatus(null);
+                      }}
+                      className="w-1/3 py-3 px-4 rounded-xl text-sm font-bold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-850 transition-all cursor-pointer text-center"
                     >
-                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                        <option key={bg} value={bg}>{bg}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Availability</label>
-                    <select
-                      value={profileAvailability}
-                      onChange={(e) => setProfileAvailability(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updating}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-rose-600/20"
                     >
-                      <option value="available">Available</option>
-                      <option value="unavailable">Unavailable</option>
-                    </select>
+                      <Save size={14} />
+                      {updating ? "Saving Changes..." : "Save Profile Details"}
+                    </button>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Date of Birth</label>
-                    <input
-                      type="date"
-                      value={profileDob}
-                      onChange={(e) => setProfileDob(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Weight (kg)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={profileWeight}
-                      onChange={(e) => setProfileWeight(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Hemoglobin (g/dL)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={profileHemoglobin}
-                      onChange={(e) => setProfileHemoglobin(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Street Address</label>
-                    <input
-                      type="text"
-                      value={profileAddress}
-                      onChange={(e) => setProfileAddress(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">City</label>
-                    <input
-                      type="text"
-                      value={profileCity}
-                      onChange={(e) => setProfileCity(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">District</label>
-                    <input
-                      type="text"
-                      value={profileDistrict}
-                      onChange={(e) => setProfileDistrict(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">State</label>
-                    <input
-                      type="text"
-                      value={profileState}
-                      onChange={(e) => setProfileState(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Latitude</label>
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={profileLat}
-                      onChange={(e) => setProfileLat(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Longitude</label>
-                    <input
-                      type="number"
-                      step="0.000001"
-                      value={profileLng}
-                      onChange={(e) => setProfileLng(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-slate-900">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Health Conditions</label>
-                    <input
-                      type="text"
-                      value={profileHealthConditions}
-                      onChange={(e) => setProfileHealthConditions(e.target.value)}
-                      placeholder="E.g., none, hypertension, diabetes"
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Travel History Risk</label>
-                    <input
-                      type="text"
-                      value={profileTravelHistory}
-                      onChange={(e) => setProfileTravelHistory(e.target.value)}
-                      placeholder="E.g., none, malaria-risk zones recently"
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Recent Vaccine Status</label>
-                    <input
-                      type="text"
-                      value={profileVaccineStatus}
-                      onChange={(e) => setProfileVaccineStatus(e.target.value)}
-                      placeholder="E.g., none, covid vaccine 5 days ago"
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={updating}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-rose-600/20"
-                >
-                  <Save size={14} />
-                  {updating ? "Saving Changes..." : "Save Profile Details"}
-                </button>
-              </form>
-            </div>
+                </form>
+              </div>
+            )}
 
             {/* Certificates & Badges Side Shelf */}
             <div className="space-y-8 lg:col-span-1">
