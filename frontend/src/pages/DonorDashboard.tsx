@@ -1349,7 +1349,7 @@ export const DonorDashboard: React.FC = () => {
                               req.emergency_type === "critical"
                                 ? "bg-red-600 text-white border border-red-500 glow-critical-badge animate-pulse"
                                 : req.emergency_type === "urgent"
-                                  ? "bg-amber-500/15 text-amber-500 border border-amber-500/20"
+                                  ? "bg-amber-500 text-white border border-amber-400 glow-urgent-badge animate-pulse"
                                   : "bg-blue-500/15 text-blue-500 border border-blue-500/20"
                             }`}>
                               {req.emergency_type}
