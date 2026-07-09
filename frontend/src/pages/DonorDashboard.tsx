@@ -1328,14 +1328,16 @@ export const DonorDashboard: React.FC = () => {
                 activeRequests.map((req) => (
                   <div
                     key={req.id}
-                    className={`glass-panel p-5 rounded-2xl border transition-all duration-200 ${
-                      req.emergency_type === "critical"
-                        ? "glow-critical bg-red-500/5"
-                        : req.emergency_type === "urgent"
-                          ? "glow-urgent bg-amber-500/5"
-                          : "glow-regular border-slate-850 bg-slate-900/10"
-                    }`}
+                    className="glass-panel p-5 pl-8 rounded-2xl border border-slate-800/80 transition-all duration-200 relative overflow-hidden bg-slate-900/20"
                   >
+                    {/* Left Severity Indicator Bar (Only critical glows) */}
+                    <div className={`absolute left-3 top-3 bottom-3 w-1 rounded-full ${
+                      req.emergency_type === "critical"
+                        ? "bg-red-500 glow-critical-bar animate-pulse"
+                        : req.emergency_type === "urgent"
+                          ? "bg-amber-500"
+                          : "bg-blue-500"
+                    }`} />
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4 flex-1">
                         {/* Severity Icon */}
