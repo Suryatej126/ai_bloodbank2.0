@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 from app.core.database import get_db
 from app.core.security import (
     get_password_hash, verify_password, create_access_token, create_refresh_token,
@@ -236,3 +237,43 @@ def verify_otp_login(req: OtpLoginVerifyRequest, db: Session = Depends(get_db)):
         refresh_token=create_refresh_token(user.id),
         token_type="bearer"
     )
+
+@router.get("/users", response_model=List[UserOut])
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have administrative privileges."
+        )
+    from sqlalchemy.orm import joinedload
+    users = db.query(User).options(joinedload(User.profile)).all()
+    return users
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have administrative privileges."
+        )
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own admin account."
+        )
+    db.delete(user)
+    db.commit()
+    return None

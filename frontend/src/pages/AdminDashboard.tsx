@@ -27,166 +27,14 @@ export const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     setLoading(true);
     
-    // 1. Load users mock seed data (always succeeds)
-    setUsers([
-      { 
-        id: 1, 
-        full_name: "Super Admin", 
-        email: "admin@bloodbank.ai", 
-        role: "admin", 
-        is_verified: true, 
-        phone: "+91 99999 99901",
-        profile: {
-          city: "Mumbai",
-          state: "Maharashtra",
-          address: "Central HQ, Fort"
-        }
-      },
-      { 
-        id: 2, 
-        full_name: "City General Hospital", 
-        email: "city_hospital@bloodbank.ai", 
-        role: "hospital", 
-        is_verified: true, 
-        phone: "+91 99999 99902",
-        profile: {
-          national_id: "HOSP-90812-IN",
-          city: "Mumbai",
-          state: "Maharashtra",
-          address: "102 Dr. Annie Besant Rd, Worli",
-          availability_status: "active"
-        }
-      },
-      { 
-        id: 6, 
-        full_name: "St. Jude Research Clinic", 
-        email: "stjude@hospital.ai", 
-        role: "hospital", 
-        is_verified: true, 
-        phone: "+91 88888 77701",
-        profile: {
-          national_id: "HOSP-44512-IN",
-          city: "Pune",
-          state: "Maharashtra",
-          address: "Sector 4, Kalyani Nagar",
-          availability_status: "active"
-        }
-      },
-      { 
-        id: 3, 
-        full_name: "Red Cross Blood Bank", 
-        email: "redcross@bloodbank.ai", 
-        role: "bloodbank", 
-        is_verified: true, 
-        phone: "+91 99999 99904",
-        profile: {
-          national_id: "LIC-BB-88902",
-          city: "Delhi",
-          state: "Delhi",
-          address: "Red Cross Building, 1 Red Cross Road",
-          availability_status: "active"
-        }
-      },
-      { 
-        id: 7, 
-        full_name: "LifeSource Regional Depot", 
-        email: "lifesource@bloodbank.ai", 
-        role: "bloodbank", 
-        is_verified: true, 
-        phone: "+91 99999 99905",
-        profile: {
-          national_id: "LIC-BB-55410",
-          city: "Bangalore",
-          state: "Karnataka",
-          address: "4th Block, Koramangala",
-          availability_status: "active"
-        }
-      },
-      { 
-        id: 4, 
-        full_name: "John Doe", 
-        email: "john@bloodbank.ai", 
-        role: "donor", 
-        is_verified: true, 
-        phone: "+91 99999 99906",
-        profile: {
-          national_id: "UID-8890-1234",
-          blood_group: "O+",
-          date_of_birth: "1995-04-12",
-          weight: 78.5,
-          hemoglobin: 14.8,
-          last_donation_date: "2026-03-01",
-          health_conditions: "None",
-          travel_history: "None",
-          vaccination_status: "Fully Vaccinated",
-          is_eligible: true,
-          city: "Mumbai",
-          state: "Maharashtra",
-          address: "Flat 4B, Silver Oak Apts, Bandra"
-        }
-      },
-      { 
-        id: 8, 
-        full_name: "Sarah Connor", 
-        email: "sarah@bloodbank.ai", 
-        role: "donor", 
-        is_verified: true, 
-        phone: "+91 99999 99907",
-        profile: {
-          national_id: "UID-4450-8912",
-          blood_group: "A-",
-          date_of_birth: "1988-11-23",
-          weight: 62.0,
-          hemoglobin: 12.5,
-          last_donation_date: "2026-01-15",
-          health_conditions: "None",
-          travel_history: "None",
-          vaccination_status: "Fully Vaccinated",
-          is_eligible: true,
-          city: "Delhi",
-          state: "Delhi",
-          address: "12 Civil Lines"
-        }
-      },
-      { 
-        id: 5, 
-        full_name: "Jane Patient", 
-        email: "jane@bloodbank.ai", 
-        role: "patient", 
-        is_verified: true, 
-        phone: "+91 99999 99911",
-        profile: {
-          national_id: "UID-1122-3344",
-          blood_group: "A+",
-          date_of_birth: "1990-08-15",
-          weight: 55.0,
-          hemoglobin: 11.2,
-          health_conditions: "Anemia history",
-          city: "Pune",
-          state: "Maharashtra",
-          address: "Bld 5, Landmark Res, Hinjewadi"
-        }
-      },
-      { 
-        id: 9, 
-        full_name: "Bobby Patient", 
-        email: "bobby@bloodbank.ai", 
-        role: "patient", 
-        is_verified: true, 
-        phone: "+91 99999 99912",
-        profile: {
-          national_id: "UID-7788-9900",
-          blood_group: "AB-",
-          date_of_birth: "2000-02-14",
-          weight: 68.0,
-          hemoglobin: 13.1,
-          health_conditions: "None",
-          city: "Bangalore",
-          state: "Karnataka",
-          address: "Sector 7, HSR Layout"
-        }
-      }
-    ]);
+    // 1. Fetch users from API
+    try {
+      const usersRes = await api.getUsers();
+      setUsers(usersRes || []);
+    } catch (error) {
+      console.warn("Failed to fetch users, using empty array fallback:", error);
+      setUsers([]);
+    }
     
     // 2. Load system activity logs (always succeeds)
     setLogs([
@@ -248,9 +96,18 @@ export const AdminDashboard: React.FC = () => {
     loadAdminData();
   }, []);
 
-  const deleteUser = (id: number) => {
+  const deleteUser = async (id: number) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(prev => prev.filter(u => u.id !== id));
+      try {
+        const success = await api.deleteUser(id);
+        if (success) {
+          setUsers(prev => prev.filter(u => u.id !== id));
+        } else {
+          alert("Failed to delete user on the backend database.");
+        }
+      } catch (error) {
+        console.error("Delete user failed:", error);
+      }
     }
   };
 

@@ -493,5 +493,32 @@ export const api = {
       }
       return "Hello! I am your AI Blood Bank assistant. Ask me about blood group compatibilities, eligibility limits, rare group locations, or how to raise an emergency SOS broadcast.";
     }
+  },
+
+  getUsers: async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/users`, {
+        headers: getHeaders(),
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    } catch (e) {
+      console.warn("Using fallback users array:", e);
+      return [];
+    }
+  },
+
+  deleteUser: async (id: number) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/users/${id}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+      if (!response.ok) throw new Error("Failed to delete user");
+      return true;
+    } catch (e) {
+      console.error("Failed to delete user on backend:", e);
+      return false;
+    }
   }
 };
