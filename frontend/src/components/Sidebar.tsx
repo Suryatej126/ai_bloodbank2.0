@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout }) => {
       case "bloodbank":
         return [
           { label: "Dashboard", icon: LayoutDashboard, path: "/bloodbank" },
+          { label: "Patient Requests", icon: Bell, path: "/bloodbank/requests" },
           { label: "Manage Inventory", icon: Database, path: "/bloodbank/inventory" },
           { label: "Collection Center", icon: Calendar, path: "/bloodbank/collection" },
         ];

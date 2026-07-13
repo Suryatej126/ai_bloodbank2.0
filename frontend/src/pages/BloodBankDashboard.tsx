@@ -12,13 +12,16 @@ import {
   Trash2,
   Activity,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Bell
 } from "lucide-react";
 
 export const BloodBankDashboard: React.FC = () => {
   const location = useLocation();
   const currentTab = location.pathname.split("/").filter(Boolean)[1] || "dashboard";
 
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [requests, setRequests] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>({ stock: {}, batches: {}, expiring_soon: [] });
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -34,6 +37,12 @@ export const BloodBankDashboard: React.FC = () => {
   const loadBloodBankData = async () => {
     setLoading(true);
     try {
+      const me = await api.getCurrentUser();
+      setCurrentUser(me);
+
+      const reqRes = await api.getRequests();
+      setRequests(reqRes);
+
       const summaryRes = await api.getInventorySummary();
       setSummary(summaryRes);
       
@@ -105,6 +114,17 @@ export const BloodBankDashboard: React.FC = () => {
       } catch (err) {
         console.error(err);
       }
+    }
+  };
+
+  const handleUpdateStatus = async (reqId: number, status: string) => {
+    try {
+      await api.updateRequestStatus(reqId, status);
+      alert(`Request status updated to ${status}!`);
+      loadBloodBankData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update request status.");
     }
   };
 
@@ -499,6 +519,122 @@ export const BloodBankDashboard: React.FC = () => {
                 {appointments.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-6 text-center text-slate-500">No scheduled donation appointments found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= PATIENT REQUESTS TAB ================= */}
+      {currentTab === "requests" && (
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Bell size={18} className="text-rose-500 animate-pulse" />
+            Patient Blood Requests (Sent to us)
+          </h3>
+          <p className="text-xs text-slate-400">
+            Below are blood requests sent specifically to your blood bank facility by patients.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-900 text-slate-400 font-bold uppercase tracking-wider">
+                  <th className="pb-3 font-semibold">Request ID</th>
+                  <th className="pb-3 font-semibold">Patient Name</th>
+                  <th className="pb-3 font-semibold">Blood Group</th>
+                  <th className="pb-3 font-semibold">Volume (Units)</th>
+                  <th className="pb-3 font-semibold">Urgency</th>
+                  <th className="pb-3 font-semibold">Priority Score</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-900">
+                {requests
+                  .filter(
+                    (r) =>
+                      currentUser &&
+                      (r.hospital_name === currentUser.full_name || 
+                       r.hospital_name?.toLowerCase().includes(currentUser.full_name.toLowerCase())) &&
+                      r.requester_id !== currentUser.id
+                  )
+                  .map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-900/30">
+                      <td className="py-3 font-mono text-slate-500">#REQ-{r.id}</td>
+                      <td className="py-3 font-bold text-slate-200">{r.recipient_name}</td>
+                      <td className="py-3 font-black text-rose-400">{r.blood_group}</td>
+                      <td className="py-3 text-slate-300 font-semibold">{r.units_required} Units</td>
+                      <td className="py-3 capitalize">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            r.emergency_type === "critical"
+                              ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                              : r.emergency_type === "urgent"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                          }`}
+                        >
+                          {r.emergency_type}
+                        </span>
+                      </td>
+                      <td className="py-3 font-mono font-black text-rose-400">
+                        {r.priority_score?.toFixed(1) ?? "50.0"} / 100
+                      </td>
+                      <td className="py-3 capitalize">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            r.status === "approved"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : r.status === "fulfilled"
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              : r.status === "cancelled"
+                              ? "bg-slate-800 text-slate-500 border border-slate-700"
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right space-x-2">
+                        {r.status === "pending" || r.status === "matching" ? (
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(r.id, "approved")}
+                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              ✓ Approve & Accept
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(r.id, "cancelled")}
+                              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-800 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : r.status === "approved" ? (
+                          <button
+                            onClick={() => handleUpdateStatus(r.id, "fulfilled")}
+                            className="px-2.5 py-1.5 bg-blue-950/40 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-900/50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            Fulfill
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-600 italic">No actions available</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                {requests.filter(
+                  (r) =>
+                    currentUser &&
+                    (r.hospital_name === currentUser.full_name || 
+                     r.hospital_name?.toLowerCase().includes(currentUser.full_name.toLowerCase())) &&
+                    r.requester_id !== currentUser.id
+                ).length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-6 text-center text-slate-500">No incoming blood requests from patients at this time.</td>
                   </tr>
                 )}
               </tbody>
