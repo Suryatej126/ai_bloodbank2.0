@@ -26,193 +26,227 @@ export const AdminDashboard: React.FC = () => {
 
   const loadAdminData = async () => {
     setLoading(true);
-    try {
-      // Mock Users Seed
-      setUsers([
-        { 
-          id: 1, 
-          full_name: "Super Admin", 
-          email: "admin@bloodbank.ai", 
-          role: "admin", 
-          is_verified: true, 
-          phone: "+91 99999 99901",
-          profile: {
-            city: "Mumbai",
-            state: "Maharashtra",
-            address: "Central HQ, Fort"
-          }
-        },
-        { 
-          id: 2, 
-          full_name: "City General Hospital", 
-          email: "city_hospital@bloodbank.ai", 
-          role: "hospital", 
-          is_verified: true, 
-          phone: "+91 99999 99902",
-          profile: {
-            national_id: "HOSP-90812-IN",
-            city: "Mumbai",
-            state: "Maharashtra",
-            address: "102 Dr. Annie Besant Rd, Worli",
-            availability_status: "active"
-          }
-        },
-        { 
-          id: 6, 
-          full_name: "St. Jude Research Clinic", 
-          email: "stjude@hospital.ai", 
-          role: "hospital", 
-          is_verified: false, 
-          phone: "+91 88888 77701",
-          profile: {
-            national_id: "HOSP-44512-IN",
-            city: "Pune",
-            state: "Maharashtra",
-            address: "Sector 4, Kalyani Nagar",
-            availability_status: "pending_review"
-          }
-        },
-        { 
-          id: 3, 
-          full_name: "Red Cross Blood Bank", 
-          email: "redcross@bloodbank.ai", 
-          role: "bloodbank", 
-          is_verified: false, 
-          phone: "+91 99999 99904",
-          profile: {
-            national_id: "LIC-BB-88902",
-            city: "Delhi",
-            state: "Delhi",
-            address: "Red Cross Building, 1 Red Cross Road",
-            availability_status: "pending_review"
-          }
-        },
-        { 
-          id: 7, 
-          full_name: "LifeSource Regional Depot", 
-          email: "lifesource@bloodbank.ai", 
-          role: "bloodbank", 
-          is_verified: true, 
-          phone: "+91 99999 99905",
-          profile: {
-            national_id: "LIC-BB-55410",
-            city: "Bangalore",
-            state: "Karnataka",
-            address: "4th Block, Koramangala",
-            availability_status: "active"
-          }
-        },
-        { 
-          id: 4, 
-          full_name: "John Doe", 
-          email: "john@bloodbank.ai", 
-          role: "donor", 
-          is_verified: true, 
-          phone: "+91 99999 99906",
-          profile: {
-            national_id: "UID-8890-1234",
-            blood_group: "O+",
-            date_of_birth: "1995-04-12",
-            weight: 78.5,
-            hemoglobin: 14.8,
-            last_donation_date: "2026-03-01",
-            health_conditions: "None",
-            travel_history: "None",
-            vaccination_status: "Fully Vaccinated",
-            is_eligible: true,
-            city: "Mumbai",
-            state: "Maharashtra",
-            address: "Flat 4B, Silver Oak Apts, Bandra"
-          }
-        },
-        { 
-          id: 8, 
-          full_name: "Sarah Connor", 
-          email: "sarah@bloodbank.ai", 
-          role: "donor", 
-          is_verified: false, 
-          phone: "+91 99999 99907",
-          profile: {
-            national_id: "UID-4450-8912",
-            blood_group: "A-",
-            date_of_birth: "1988-11-23",
-            weight: 62.0,
-            hemoglobin: 12.5,
-            last_donation_date: "2026-01-15",
-            health_conditions: "None",
-            travel_history: "None",
-            vaccination_status: "Fully Vaccinated",
-            is_eligible: true,
-            city: "Delhi",
-            state: "Delhi",
-            address: "12 Civil Lines"
-          }
-        },
-        { 
-          id: 5, 
-          full_name: "Jane Patient", 
-          email: "jane@bloodbank.ai", 
-          role: "patient", 
-          is_verified: true, 
-          phone: "+91 99999 99911",
-          profile: {
-            national_id: "UID-1122-3344",
-            blood_group: "A+",
-            date_of_birth: "1990-08-15",
-            weight: 55.0,
-            hemoglobin: 11.2,
-            health_conditions: "Anemia history",
-            city: "Pune",
-            state: "Maharashtra",
-            address: "Bld 5, Landmark Res, Hinjewadi"
-          }
-        },
-        { 
-          id: 9, 
-          full_name: "Bobby Patient", 
-          email: "bobby@bloodbank.ai", 
-          role: "patient", 
-          is_verified: false, 
-          phone: "+91 99999 99912",
-          profile: {
-            national_id: "UID-7788-9900",
-            blood_group: "AB-",
-            date_of_birth: "2000-02-14",
-            weight: 68.0,
-            hemoglobin: 13.1,
-            health_conditions: "None",
-            city: "Bangalore",
-            state: "Karnataka",
-            address: "Sector 7, HSR Layout"
-          }
+    
+    // 1. Load users mock seed data (always succeeds)
+    setUsers([
+      { 
+        id: 1, 
+        full_name: "Super Admin", 
+        email: "admin@bloodbank.ai", 
+        role: "admin", 
+        is_verified: true, 
+        phone: "+91 99999 99901",
+        profile: {
+          city: "Mumbai",
+          state: "Maharashtra",
+          address: "Central HQ, Fort"
         }
-      ]);
-      
+      },
+      { 
+        id: 2, 
+        full_name: "City General Hospital", 
+        email: "city_hospital@bloodbank.ai", 
+        role: "hospital", 
+        is_verified: true, 
+        phone: "+91 99999 99902",
+        profile: {
+          national_id: "HOSP-90812-IN",
+          city: "Mumbai",
+          state: "Maharashtra",
+          address: "102 Dr. Annie Besant Rd, Worli",
+          availability_status: "active"
+        }
+      },
+      { 
+        id: 6, 
+        full_name: "St. Jude Research Clinic", 
+        email: "stjude@hospital.ai", 
+        role: "hospital", 
+        is_verified: true, 
+        phone: "+91 88888 77701",
+        profile: {
+          national_id: "HOSP-44512-IN",
+          city: "Pune",
+          state: "Maharashtra",
+          address: "Sector 4, Kalyani Nagar",
+          availability_status: "active"
+        }
+      },
+      { 
+        id: 3, 
+        full_name: "Red Cross Blood Bank", 
+        email: "redcross@bloodbank.ai", 
+        role: "bloodbank", 
+        is_verified: true, 
+        phone: "+91 99999 99904",
+        profile: {
+          national_id: "LIC-BB-88902",
+          city: "Delhi",
+          state: "Delhi",
+          address: "Red Cross Building, 1 Red Cross Road",
+          availability_status: "active"
+        }
+      },
+      { 
+        id: 7, 
+        full_name: "LifeSource Regional Depot", 
+        email: "lifesource@bloodbank.ai", 
+        role: "bloodbank", 
+        is_verified: true, 
+        phone: "+91 99999 99905",
+        profile: {
+          national_id: "LIC-BB-55410",
+          city: "Bangalore",
+          state: "Karnataka",
+          address: "4th Block, Koramangala",
+          availability_status: "active"
+        }
+      },
+      { 
+        id: 4, 
+        full_name: "John Doe", 
+        email: "john@bloodbank.ai", 
+        role: "donor", 
+        is_verified: true, 
+        phone: "+91 99999 99906",
+        profile: {
+          national_id: "UID-8890-1234",
+          blood_group: "O+",
+          date_of_birth: "1995-04-12",
+          weight: 78.5,
+          hemoglobin: 14.8,
+          last_donation_date: "2026-03-01",
+          health_conditions: "None",
+          travel_history: "None",
+          vaccination_status: "Fully Vaccinated",
+          is_eligible: true,
+          city: "Mumbai",
+          state: "Maharashtra",
+          address: "Flat 4B, Silver Oak Apts, Bandra"
+        }
+      },
+      { 
+        id: 8, 
+        full_name: "Sarah Connor", 
+        email: "sarah@bloodbank.ai", 
+        role: "donor", 
+        is_verified: true, 
+        phone: "+91 99999 99907",
+        profile: {
+          national_id: "UID-4450-8912",
+          blood_group: "A-",
+          date_of_birth: "1988-11-23",
+          weight: 62.0,
+          hemoglobin: 12.5,
+          last_donation_date: "2026-01-15",
+          health_conditions: "None",
+          travel_history: "None",
+          vaccination_status: "Fully Vaccinated",
+          is_eligible: true,
+          city: "Delhi",
+          state: "Delhi",
+          address: "12 Civil Lines"
+        }
+      },
+      { 
+        id: 5, 
+        full_name: "Jane Patient", 
+        email: "jane@bloodbank.ai", 
+        role: "patient", 
+        is_verified: true, 
+        phone: "+91 99999 99911",
+        profile: {
+          national_id: "UID-1122-3344",
+          blood_group: "A+",
+          date_of_birth: "1990-08-15",
+          weight: 55.0,
+          hemoglobin: 11.2,
+          health_conditions: "Anemia history",
+          city: "Pune",
+          state: "Maharashtra",
+          address: "Bld 5, Landmark Res, Hinjewadi"
+        }
+      },
+      { 
+        id: 9, 
+        full_name: "Bobby Patient", 
+        email: "bobby@bloodbank.ai", 
+        role: "patient", 
+        is_verified: true, 
+        phone: "+91 99999 99912",
+        profile: {
+          national_id: "UID-7788-9900",
+          blood_group: "AB-",
+          date_of_birth: "2000-02-14",
+          weight: 68.0,
+          hemoglobin: 13.1,
+          health_conditions: "None",
+          city: "Bangalore",
+          state: "Karnataka",
+          address: "Sector 7, HSR Layout"
+        }
+      }
+    ]);
+    
+    // 2. Load system activity logs (always succeeds)
+    setLogs([
+      { id: 101, action: "Register", details: "User john@bloodbank.ai registered as role donor", created_at: "2026-07-04T12:05:00Z" },
+      { id: 102, action: "Raise Request", details: "Raised critical request for 3.0 units of AB-", created_at: "2026-07-04T14:12:00Z" },
+      { id: 103, action: "System Seeding", details: "Initial database seed and account setup completed successfully.", created_at: "2026-07-04T10:00:00Z" }
+    ]);
+    
+    // 3. Fetch Stock Summary (graceful try-catch)
+    try {
       const stockRes = await api.getInventorySummary();
       setStockSummary(stockRes);
-      
+    } catch (error) {
+      console.warn("Failed to fetch backend inventory summary, using fallback mock data:", error);
+      setStockSummary({
+        stock: { "A+": 25, "A-": 8, "B+": 32, "B-": 5, "AB+": 18, "AB-": 2, "O+": 45, "O-": 4 },
+        batches: { "A+": 5, "A-": 2, "B+": 6, "B-": 2, "AB+": 3, "AB-": 1, "O+": 8, "O-": 2 },
+        expiring_soon: [
+          { id: 4, blood_group: "AB-", quantity: 1.0, expiry_date: "2026-07-09", storage_temp: 4.1 },
+          { id: 12, blood_group: "O-", quantity: 2.0, expiry_date: "2026-07-11", storage_temp: 3.8 }
+        ]
+      });
+    }
+    
+    // 4. Fetch Shortage Predictions (graceful try-catch)
+    try {
       const forecastRes = await api.getShortagePredictions();
       setForecasts(forecastRes.predictions || []);
-      
-      setLogs([
-        { id: 101, action: "Register", details: "User john@bloodbank.ai registered as role donor", created_at: "2026-07-04T12:05:00Z" },
-        { id: 102, action: "Raise Request", details: "Raised critical request for 3.0 units of AB-", created_at: "2026-07-04T14:12:00Z" },
-        { id: 103, action: "System Seeding", details: "Initial database seed and account setup completed successfully.", created_at: "2026-07-04T10:00:00Z" }
-      ]);
     } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+      console.warn("Failed to fetch backend shortage predictions, using fallback mock data:", error);
+      const bloodGroups = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
+      const fallbackPredictions = [];
+      const current = new Date();
+      for (const bg of bloodGroups) {
+        for (let i = 0; i < 7; i++) {
+          const dateStr = new Date(current.getTime() + i * 86400000).toISOString().split("T")[0];
+          const hist = bg.includes("-") ? 3.5 : 9.0;
+          const demand = hist + Math.sin(i) * 2 + Math.random() * 1.5;
+          const avail = bg === "AB-" ? 1.0 : bg === "O-" ? 3.0 : 15.0;
+          const deficit = Math.max(0, demand - avail);
+          fallbackPredictions.push({
+            date: dateStr,
+            blood_group: bg,
+            historical_avg: Math.round(hist * 10) / 10,
+            predicted_demand: Math.round(demand * 10) / 10,
+            available_units: avail,
+            shortage_risk: deficit > avail * 0.5 ? "High" : deficit > 0 ? "Medium" : "Low",
+            deficit_units: Math.round(deficit * 10) / 10
+          });
+        }
+      }
+      setForecasts(fallbackPredictions);
     }
+    
+    setLoading(false);
   };
 
   useEffect(() => {
     loadAdminData();
   }, []);
-
-  const toggleVerifyUser = (id: number) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: !u.is_verified } : u));
-  };
 
   const deleteUser = (id: number) => {
     if (confirm("Are you sure you want to delete this user?")) {
@@ -231,8 +265,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Count metrics
   const totalUsers = users.length;
-  const verifiedHospitals = users.filter(u => u.role === "hospital" && u.is_verified).length;
-  const pendingApprovals = users.filter(u => !u.is_verified).length;
+  const activeHospitals = users.filter(u => u.role === "hospital").length;
   const totalStock = Object.values(stockSummary.stock).reduce((a: any, b: any) => a + b, 0) as number;
 
   return (
@@ -262,7 +295,7 @@ export const AdminDashboard: React.FC = () => {
       {(currentTab === "overview" || currentTab === "admin") && (
         <>
           {/* Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Registers</p>
@@ -276,7 +309,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Active Hospitals</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">{verifiedHospitals}</p>
+                <p className="text-3xl font-black mt-2 text-rose-400">{activeHospitals}</p>
               </div>
               <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl">
                 <Building2 size={20} />
@@ -292,16 +325,6 @@ export const AdminDashboard: React.FC = () => {
                 <Database size={20} />
               </div>
             </div>
-
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Pending Approvals</p>
-                <p className="text-3xl font-black mt-2 text-amber-500">{pendingApprovals}</p>
-              </div>
-              <div className="p-3.5 bg-amber-500/10 text-amber-500 rounded-xl">
-                <Activity size={20} />
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -314,7 +337,6 @@ export const AdminDashboard: React.FC = () => {
                     <tr className="border-b border-slate-900 text-slate-400">
                       <th className="pb-3 font-semibold">User</th>
                       <th className="pb-3 font-semibold">Role</th>
-                      <th className="pb-3 font-semibold">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-900">
@@ -325,15 +347,6 @@ export const AdminDashboard: React.FC = () => {
                           <p className="text-slate-500 text-[10px]">{u.email}</p>
                         </td>
                         <td className="py-3 capitalize text-slate-400 font-medium">{u.role}</td>
-                        <td className="py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                            u.is_verified 
-                              ? "bg-emerald-500/10 text-emerald-400" 
-                              : "bg-amber-500/10 text-amber-400"
-                          }`}>
-                            {u.is_verified ? "Verified" : "Pending"}
-                          </span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -371,7 +384,6 @@ export const AdminDashboard: React.FC = () => {
               { id: "donor", label: "Donors", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
               { id: "patient", label: "Patients", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" }
             ].map(tab => {
-              const pendingCount = users.filter(u => u.role === tab.id && !u.is_verified).length;
               const isActive = activeSubTab === tab.id;
               return (
                 <button
@@ -384,11 +396,6 @@ export const AdminDashboard: React.FC = () => {
                   }`}
                 >
                   {tab.label}
-                  {pendingCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-slate-950 animate-pulse">
-                      {pendingCount} Pending
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -398,84 +405,16 @@ export const AdminDashboard: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             {(() => {
               const filteredUsers = users.filter(u => u.role === activeSubTab);
-              const pendingUsers = filteredUsers.filter(u => !u.is_verified);
-              const verifiedUsers = filteredUsers.filter(u => u.is_verified);
 
               return (
                 <div className="space-y-6">
-                  {/* Pending Approvals Table */}
-                  <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-sm font-black uppercase tracking-wider text-amber-500 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                        Pending Approvals ({pendingUsers.length})
-                      </h4>
-                    </div>
-                    {pendingUsers.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No pending approvals for this category.</p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="border-b border-slate-900 text-slate-400">
-                              <th className="pb-3 font-semibold">Name / Email</th>
-                              <th className="pb-3 font-semibold">Phone</th>
-                              {activeSubTab === "donor" || activeSubTab === "patient" ? (
-                                <th className="pb-3 font-semibold">Blood Group</th>
-                              ) : null}
-                              <th className="pb-3 font-semibold">Location</th>
-                              <th className="pb-3 font-semibold text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900">
-                            {pendingUsers.map(u => (
-                              <tr key={u.id} className="hover:bg-slate-900/30 transition-colors group">
-                                <td className="py-3">
-                                  <button
-                                    onClick={() => setSelectedUser(u)}
-                                    className="font-bold text-rose-400 hover:text-rose-300 hover:underline text-left cursor-pointer transition-colors"
-                                    title="View Profile Details"
-                                  >
-                                    {u.full_name}
-                                  </button>
-                                  <p className="text-slate-500 text-[10px]">{u.email}</p>
-                                </td>
-                                <td className="py-3 text-slate-400 font-mono">{u.phone}</td>
-                                {activeSubTab === "donor" || activeSubTab === "patient" ? (
-                                  <td className="py-3 font-extrabold text-slate-300">{u.profile?.blood_group || "N/A"}</td>
-                                ) : null}
-                                <td className="py-3 text-slate-400">{u.profile?.city ? `${u.profile.city}, ${u.profile.state}` : "N/A"}</td>
-                                <td className="py-3 text-right space-x-2">
-                                  <button
-                                    onClick={() => toggleVerifyUser(u.id)}
-                                    className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 font-bold rounded-lg text-[10px] transition-all duration-200 cursor-pointer"
-                                    title="Approve User"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => deleteUser(u.id)}
-                                    className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer inline-flex align-middle"
-                                    title="Delete User"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Active / Verified Registry Table */}
+                  {/* Registry Table */}
                   <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
                     <h4 className="text-sm font-black uppercase tracking-wider text-slate-400">
-                      Verified Registry ({verifiedUsers.length})
+                      User Registry ({filteredUsers.length})
                     </h4>
-                    {verifiedUsers.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No verified accounts in this category yet.</p>
+                    {filteredUsers.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-4 text-center">No registered accounts in this category yet.</p>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
@@ -491,7 +430,7 @@ export const AdminDashboard: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900">
-                            {verifiedUsers.map(u => (
+                            {filteredUsers.map(u => (
                               <tr key={u.id} className="hover:bg-slate-900/30 transition-colors">
                                 <td className="py-3">
                                   <button
@@ -509,13 +448,6 @@ export const AdminDashboard: React.FC = () => {
                                 ) : null}
                                 <td className="py-3 text-slate-400">{u.profile?.city ? `${u.profile.city}, ${u.profile.state}` : "N/A"}</td>
                                 <td className="py-3 text-right space-x-2">
-                                  <button
-                                    onClick={() => toggleVerifyUser(u.id)}
-                                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold border border-slate-700 rounded-lg text-[10px] transition-all duration-200 cursor-pointer"
-                                    title="Revoke Verification"
-                                  >
-                                    Revoke
-                                  </button>
                                   <button
                                     onClick={() => deleteUser(u.id)}
                                     className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer inline-flex align-middle"
@@ -674,14 +606,10 @@ export const AdminDashboard: React.FC = () => {
                   <p className="text-slate-200 mt-0.5 font-mono">{selectedUser.phone || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Verification Status</p>
-                  <span className={`inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                    selectedUser.is_verified 
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                      : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${selectedUser.is_verified ? "bg-emerald-500" : "bg-amber-500"}`}></span>
-                    {selectedUser.is_verified ? "Verified / Approved" : "Pending Verification"}
+                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Account Status</p>
+                  <span className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Active / Approved
                   </span>
                 </div>
                 <div>
@@ -814,24 +742,11 @@ export const AdminDashboard: React.FC = () => {
               </button>
 
               <div className="flex gap-2">
-                <button
+                 <button
                   onClick={() => setSelectedUser(null)}
                   className="px-4 py-2 border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Close
-                </button>
-                <button
-                  onClick={() => {
-                    toggleVerifyUser(selectedUser.id);
-                    setSelectedUser((prev: any) => ({ ...prev, is_verified: !prev.is_verified }));
-                  }}
-                  className={`px-4 py-2 font-bold rounded-xl text-xs transition-all duration-200 cursor-pointer ${
-                    selectedUser.is_verified
-                      ? "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700"
-                      : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
-                  }`}
-                >
-                  {selectedUser.is_verified ? "Revoke Verification" : "Approve & Verify"}
                 </button>
               </div>
             </div>

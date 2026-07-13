@@ -12,7 +12,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     phone = Column(String, index=True, nullable=True)
     role = Column(String, nullable=False) # admin, hospital, bloodbank, donor, patient
-    is_verified = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
