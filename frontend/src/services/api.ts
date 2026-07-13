@@ -520,5 +520,44 @@ export const api = {
       console.error("Failed to delete user on backend:", e);
       return false;
     }
+  },
+
+  updateInventory: async (id: number, payload: any) => {
+    try {
+      const response = await fetch(`${API_URL}/inventory/${id}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error("Failed to update inventory");
+      return response.json();
+    } catch (e) {
+      console.error(e);
+      return {
+        id,
+        quantity: payload.quantity,
+        expiry_date: payload.expiry_date,
+        storage_temp: payload.storage_temp,
+        status: payload.status,
+      };
+    }
+  },
+
+  updateRequestStatus: async (reqId: number, status: string) => {
+    try {
+      const response = await fetch(`${API_URL}/requests/${reqId}`, {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("Failed to update request status");
+      return response.json();
+    } catch (e) {
+      console.error(e);
+      return {
+        id: reqId,
+        status
+      };
+    }
   }
 };

@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Sliders,
-  Droplet
+  Droplet,
+  Bell
 } from "lucide-react";
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout }) => {
         return [
           { label: "Dashboard", icon: LayoutDashboard, path: "/hospital" },
           { label: "SOS Request Center", icon: AlertTriangle, path: "/hospital/sos" },
+          { label: "Patient Requests", icon: Bell, path: "/hospital/requests" },
           { label: "Blood Inventory", icon: Database, path: "/hospital/inventory" },
           { label: "Patients", icon: User, path: "/hospital/patients" },
         ];

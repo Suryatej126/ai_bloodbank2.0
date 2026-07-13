@@ -11,7 +11,8 @@ import {
   PlusCircle, 
   Send,
   User,
-  Database
+  Database,
+  Bell
 } from "lucide-react";
 
 export const HospitalDashboard: React.FC = () => {
@@ -23,13 +24,22 @@ export const HospitalDashboard: React.FC = () => {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
-  
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+
   // Form States for new SOS request
   const [recipientName, setRecipientName] = useState("");
   const [bloodGroup, setBloodGroup] = useState("A+");
   const [units, setUnits] = useState("2");
   const [emergencyType, setEmergencyType] = useState("critical");
   const [address, setAddress] = useState("City Hospital, New Delhi");
+
+  // Edit Inventory Modal States
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editExpiryDate, setEditExpiryDate] = useState("");
+  const [editStorageTemp, setEditStorageTemp] = useState("");
+  const [editStatus, setEditStatus] = useState("");
   
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
@@ -37,6 +47,9 @@ export const HospitalDashboard: React.FC = () => {
   const loadHospitalData = async () => {
     setLoading(true);
     try {
+      const userRes = await api.getCurrentUser();
+      setCurrentUser(userRes);
+
       const reqRes = await api.getRequests();
       setRequests(reqRes);
       
@@ -60,13 +73,20 @@ export const HospitalDashboard: React.FC = () => {
     loadHospitalData();
   }, []);
 
+  // Pre-fill hospital address when user profile loads
+  useEffect(() => {
+    if (currentUser?.profile?.address) {
+      setAddress(currentUser.profile.address);
+    }
+  }, [currentUser]);
+
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recipientName) return;
     
-    // Simulate latitude & longitude rough coordinates for New Delhi City Hospital
-    const lat = 28.625 + (Math.random() - 0.5) * 0.05;
-    const lon = 77.215 + (Math.random() - 0.5) * 0.05;
+    // Simulate latitude & longitude rough coordinates for hospital location
+    const lat = currentUser?.profile?.latitude || (28.625 + (Math.random() - 0.5) * 0.05);
+    const lon = currentUser?.profile?.longitude || (77.215 + (Math.random() - 0.5) * 0.05);
 
     try {
       const newReq = await api.createRequest({
@@ -74,7 +94,7 @@ export const HospitalDashboard: React.FC = () => {
         blood_group: bloodGroup,
         units_required: parseFloat(units),
         emergency_type: emergencyType,
-        hospital_name: "City General Hospital",
+        hospital_name: currentUser?.full_name || "City General Hospital",
         address,
         latitude: lat,
         longitude: lon
@@ -103,6 +123,61 @@ export const HospitalDashboard: React.FC = () => {
 
   const handleAlertDonor = (donorId: number, donorName: string) => {
     alert(`Alert notification dispatch successfully sent to matching donor ${donorName}!`);
+  };
+
+  const handleUpdateStatus = async (reqId: number, status: string) => {
+    try {
+      await api.updateRequestStatus(reqId, status);
+      alert(`Request status updated to ${status}!`);
+      loadHospitalData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update request status.");
+    }
+  };
+
+  const handleOpenEditModal = (item: any) => {
+    setEditingItem(item);
+    setEditQuantity(item.quantity.toString());
+    setEditExpiryDate(item.expiry_date.split("T")[0]);
+    setEditStorageTemp(item.storage_temp.toString());
+    setEditStatus(item.status);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    try {
+      await api.updateInventory(editingItem.id, {
+        quantity: parseFloat(editQuantity),
+        expiry_date: editExpiryDate,
+        storage_temp: parseFloat(editStorageTemp),
+        status: editStatus
+      });
+      alert("Inventory batch updated successfully!");
+      setEditModalOpen(false);
+      setEditingItem(null);
+      // Reload inventory
+      const invRes = await api.getInventory();
+      setInventory(invRes);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update inventory.");
+    }
+  };
+
+  const handleDeleteInventory = async (itemId: number) => {
+    if (confirm("Are you sure you want to discard this inventory batch?")) {
+      try {
+        await api.deleteInventory(itemId);
+        setInventory(prev => prev.filter(i => i.id !== itemId));
+        alert("Inventory batch discarded.");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete inventory.");
+      }
+    }
   };
 
   if (loading) {
@@ -398,6 +473,7 @@ export const HospitalDashboard: React.FC = () => {
                   <th className="pb-3 font-semibold">Volume (Units)</th>
                   <th className="pb-3 font-semibold">Expiry Date</th>
                   <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-900">
@@ -412,11 +488,143 @@ export const HospitalDashboard: React.FC = () => {
                         {item.status}
                       </span>
                     </td>
+                    <td className="py-3 text-right space-x-2">
+                      <button
+                        onClick={() => handleOpenEditModal(item)}
+                        className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteInventory(item.id)}
+                        className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-800 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                      >
+                        Discard
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {inventory.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500">No active inventory matches this hospital context.</td>
+                    <td colSpan={6} className="py-6 text-center text-slate-500">No active inventory matches this hospital context.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= PATIENT REQUESTS TAB ================= */}
+      {currentTab === "requests" && (
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Bell size={18} className="text-rose-500 animate-pulse" />
+            Patient Blood Requests (Sent to us)
+          </h3>
+          <p className="text-xs text-slate-400">
+            Below are blood requests sent specifically to your facility by patients.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-900 text-slate-400">
+                  <th className="pb-3 font-semibold">Request ID</th>
+                  <th className="pb-3 font-semibold">Patient Name</th>
+                  <th className="pb-3 font-semibold">Blood Group</th>
+                  <th className="pb-3 font-semibold">Volume (Units)</th>
+                  <th className="pb-3 font-semibold">Urgency</th>
+                  <th className="pb-3 font-semibold">Priority Score</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-900">
+                {requests
+                  .filter(
+                    (r) =>
+                      currentUser &&
+                      (r.hospital_name === currentUser.full_name || 
+                       r.hospital_name?.toLowerCase().includes(currentUser.full_name.toLowerCase())) &&
+                      r.requester_id !== currentUser.id
+                  )
+                  .map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-900/30">
+                      <td className="py-3 font-mono text-slate-500">#REQ-{r.id}</td>
+                      <td className="py-3 font-bold text-slate-200">{r.recipient_name}</td>
+                      <td className="py-3 font-black text-rose-400">{r.blood_group}</td>
+                      <td className="py-3 text-slate-300 font-semibold">{r.units_required} Units</td>
+                      <td className="py-3 capitalize">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            r.emergency_type === "critical"
+                              ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                              : r.emergency_type === "urgent"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                          }`}
+                        >
+                          {r.emergency_type}
+                        </span>
+                      </td>
+                      <td className="py-3 font-mono font-black text-rose-400">
+                        {r.priority_score?.toFixed(1)} / 100
+                      </td>
+                      <td className="py-3 capitalize">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            r.status === "approved"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : r.status === "fulfilled"
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              : r.status === "cancelled"
+                              ? "bg-slate-800 text-slate-500 border border-slate-700"
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right space-x-2">
+                        {r.status === "pending" || r.status === "matching" ? (
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(r.id, "approved")}
+                              className="px-2.5 py-1.5 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-900/50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleUpdateStatus(r.id, "cancelled")}
+                              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-800 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : r.status === "approved" ? (
+                          <button
+                            onClick={() => handleUpdateStatus(r.id, "fulfilled")}
+                            className="px-2.5 py-1.5 bg-blue-950/40 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-900/50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            Fulfill
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-600 italic">No actions available</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                {requests.filter(
+                  (r) =>
+                    currentUser &&
+                    (r.hospital_name === currentUser.full_name || 
+                     r.hospital_name?.toLowerCase().includes(currentUser.full_name.toLowerCase())) &&
+                    r.requester_id !== currentUser.id
+                ).length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-6 text-center text-slate-500">
+                      No patient requests sent to your facility yet.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -457,6 +665,98 @@ export const HospitalDashboard: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ======= INVENTORY EDIT MODAL ======= */}
+      {editModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditModalOpen(false)}>
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-800">
+              <h3 className="text-sm font-bold flex items-center gap-2 text-rose-500">
+                <Database size={16} />
+                Edit Inventory Batch #INV-{editingItem.id}
+              </h3>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200 text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveEdit} className="p-5 space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Blood Group</label>
+                <div className="px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-rose-400 font-bold">
+                  {editingItem.blood_group} (Read-only)
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Volume (Units)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  required
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Expiry Date</label>
+                <input
+                  type="date"
+                  required
+                  value={editExpiryDate}
+                  onChange={(e) => setEditExpiryDate(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Storage Temp (°C)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  required
+                  value={editStorageTemp}
+                  onChange={(e) => setEditStorageTemp(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-600"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
+                >
+                  <option value="available">Available</option>
+                  <option value="low_stock">Low Stock</option>
+                  <option value="expiring">Expiring Soon</option>
+                  <option value="discarded">Discarded</option>
+                </select>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
