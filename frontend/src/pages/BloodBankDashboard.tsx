@@ -270,7 +270,25 @@ export const BloodBankDashboard: React.FC = () => {
                       <td className="py-3 font-mono text-slate-500">#INV-{item.id}</td>
                       <td className="py-3 font-bold text-rose-400">{item.blood_group}</td>
                       <td className="py-3 text-slate-300 font-semibold">{item.quantity} Units</td>
-                      <td className="py-3 text-slate-400">{new Date(item.expiry_date).toLocaleDateString()}</td>
+                      <td className="py-3 text-slate-400">
+                        <div>{new Date(item.expiry_date).toLocaleDateString()}</div>
+                        {(() => {
+                          const daysLeft = Math.ceil((new Date(item.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                          const pct = Math.max(0, Math.min(100, (daysLeft / 35) * 100));
+                          const barColor = daysLeft < 5 ? "bg-red-500 animate-pulse" : daysLeft < 15 ? "bg-amber-500" : "bg-emerald-500";
+                          const textColor = daysLeft < 5 ? "text-red-400 font-bold" : daysLeft < 15 ? "text-amber-400" : "text-emerald-400";
+                          return (
+                            <div className="mt-1.5 space-y-1">
+                              <div className="w-24 h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
+                                <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }}></div>
+                              </div>
+                              <div className={`text-[9px] font-bold ${textColor}`}>
+                                {daysLeft <= 0 ? "Expired" : `${daysLeft} days remaining`}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </td>
                       <td className="py-3 font-mono text-slate-400">{item.storage_temp}°C</td>
                       <td className="py-3 text-right">
                         <button

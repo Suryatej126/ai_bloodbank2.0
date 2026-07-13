@@ -40,6 +40,26 @@ export const HospitalDashboard: React.FC = () => {
   const [editExpiryDate, setEditExpiryDate] = useState("");
   const [editStorageTemp, setEditStorageTemp] = useState("");
   const [editStatus, setEditStatus] = useState("");
+
+  const [selectedChartGroup, setSelectedChartGroup] = useState("O+");
+
+  const getChartDataForGroup = (group: string) => {
+    // Generate deterministic data based on the blood group name so it is consistent but dynamic
+    const baseDemand = group.includes("-") ? 2.5 : 7.0;
+    const baseAvail = group === "AB-" ? 1.0 : group === "O-" ? 2.5 : group.includes("-") ? 4.0 : 9.5;
+    
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return days.map((day, i) => {
+      // Add slight variations based on the index
+      const demand = Math.max(1, baseDemand + Math.sin(i) * 1.5 + (i % 2 === 0 ? 0.8 : -0.5));
+      const avail = Math.max(0.5, baseAvail + Math.cos(i) * 2.0 + (i % 3 === 0 ? 1.2 : -0.8));
+      return {
+        day,
+        demand: Math.round(demand * 10) / 10,
+        availability: Math.round(avail * 10) / 10
+      };
+    });
+  };
   
   const [loading, setLoading] = useState(false);
   const [recLoading, setRecLoading] = useState(false);
@@ -231,21 +251,108 @@ export const HospitalDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Recent requests quick view */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-lg font-bold">Recent Emergency Broadcasts</h3>
-            <div className="space-y-3">
-              {requests.slice(0, 3).map((r) => (
-                <div key={r.id} className="p-3 rounded-xl bg-slate-900/40 border border-slate-800 flex justify-between items-center text-xs">
-                  <div>
-                    <span className="font-bold text-slate-200">{r.recipient_name}</span> • <span className="text-rose-400">{r.blood_group}</span> ({r.units_required} Units)
+          {/* Grid Layout for Recent Requests & Interactive Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent requests quick view */}
+            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold">Recent Emergency Broadcasts</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Quick lookup of the latest active emergency calls raised by your facility.</p>
+              </div>
+              <div className="space-y-3 mt-4 flex-1">
+                {requests.slice(0, 4).map((r) => (
+                  <div key={r.id} className="p-3 rounded-xl bg-slate-900/40 border border-slate-800 flex justify-between items-center text-xs">
+                    <div>
+                      <span className="font-bold text-slate-200">{r.recipient_name}</span> • <span className="text-rose-400">{r.blood_group}</span> ({r.units_required} Units)
+                    </div>
+                    <span className="font-mono font-black text-rose-500">{r.priority_score.toFixed(1)} AI Priority</span>
                   </div>
-                  <span className="font-mono font-black text-rose-500">{r.priority_score.toFixed(1)} AI Priority</span>
+                ))}
+                {requests.length === 0 && (
+                  <p className="text-xs text-slate-500 text-center py-8">No requests raised yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Interactive Blood Analytics Chart Widget */}
+            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-extrabold flex items-center gap-2">
+                    <Activity size={16} className="text-rose-500" />
+                    Demand vs Availability Projection
+                  </h3>
+                  <span className="text-[10px] text-slate-500 font-bold tracking-wider uppercase bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                    Weekly View
+                  </span>
                 </div>
-              ))}
-              {requests.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-4">No requests raised yet.</p>
-              )}
+                <p className="text-[11px] text-slate-500 mt-1">Select a blood type subgroup below to view simulated time-series projections.</p>
+                
+                {/* Blood Group Selectors */}
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                    <button
+                      key={bg}
+                      type="button"
+                      onClick={() => setSelectedChartGroup(bg)}
+                      className={`px-2.5 py-1 text-[10px] font-black rounded-lg border transition-all cursor-pointer ${
+                        selectedChartGroup === bg
+                          ? "bg-rose-500/20 text-rose-400 border-rose-500/45 shadow-lg shadow-rose-500/5"
+                          : "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {bg}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Custom CSS Bar Chart */}
+              <div className="pt-2 flex-1 flex flex-col justify-end">
+                <div className="h-32 flex items-end justify-between px-2 gap-2 mt-4">
+                  {getChartDataForGroup(selectedChartGroup).map((data, index) => {
+                    const maxVal = 15; // Max units scale
+                    const demandHeight = (data.demand / maxVal) * 100;
+                    const availHeight = (data.availability / maxVal) * 100;
+                    
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-1.5 group relative">
+                        {/* Tooltip on hover */}
+                        <div className="absolute -top-12 scale-0 group-hover:scale-100 bg-slate-900/95 border border-slate-700 p-2 rounded-xl text-[9px] font-bold text-slate-200 z-10 w-24 pointer-events-none transition-transform duration-100 shadow-xl text-center">
+                          <p className="text-rose-400">Demand: {data.demand}U</p>
+                          <p className="text-emerald-400">Avail: {data.availability}U</p>
+                        </div>
+                        
+                        <div className="w-full h-full flex items-end justify-center gap-0.5">
+                          {/* Demand Bar (Rose) */}
+                          <div
+                            className="w-2 bg-gradient-to-t from-rose-700 to-rose-500 rounded-t-sm transition-all duration-300"
+                            style={{ height: `${Math.max(4, demandHeight)}%` }}
+                          ></div>
+                          {/* Availability Bar (Emerald) */}
+                          <div
+                            className="w-2 bg-gradient-to-t from-emerald-700 to-emerald-500 rounded-t-sm transition-all duration-300"
+                            style={{ height: `${Math.max(4, availHeight)}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-500">{data.day}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Legend */}
+                <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-slate-900 text-[10px] font-bold text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-rose-500"></div>
+                    <span>Demand (Units)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-emerald-500"></div>
+                    <span>Availability (Units)</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -482,7 +589,25 @@ export const HospitalDashboard: React.FC = () => {
                     <td className="py-3 font-mono text-slate-400">#INV-{item.id}</td>
                     <td className="py-3 font-bold text-rose-400">{item.blood_group}</td>
                     <td className="py-3 text-slate-300 font-semibold">{item.quantity} Units</td>
-                    <td className="py-3 text-slate-400">{new Date(item.expiry_date).toLocaleDateString()}</td>
+                    <td className="py-3 text-slate-400">
+                      <div>{new Date(item.expiry_date).toLocaleDateString()}</div>
+                      {(() => {
+                        const daysLeft = Math.ceil((new Date(item.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                        const pct = Math.max(0, Math.min(100, (daysLeft / 35) * 100));
+                        const barColor = daysLeft < 5 ? "bg-red-500 animate-pulse" : daysLeft < 15 ? "bg-amber-500" : "bg-emerald-500";
+                        const textColor = daysLeft < 5 ? "text-red-400 font-bold" : daysLeft < 15 ? "text-amber-400" : "text-emerald-400";
+                        return (
+                          <div className="mt-1.5 space-y-1">
+                            <div className="w-24 h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
+                              <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <div className={`text-[9px] font-bold ${textColor}`}>
+                              {daysLeft <= 0 ? "Expired" : `${daysLeft} days remaining`}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="py-3">
                       <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         {item.status}
@@ -590,9 +715,9 @@ export const HospitalDashboard: React.FC = () => {
                           <>
                             <button
                               onClick={() => handleUpdateStatus(r.id, "approved")}
-                              className="px-2.5 py-1.5 bg-emerald-950/40 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-900/50 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
                             >
-                              Approve
+                              ✓ Approve & Accept
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(r.id, "cancelled")}
