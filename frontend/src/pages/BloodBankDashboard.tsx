@@ -10,7 +10,9 @@ import {
   CheckCircle,
   FileCheck2,
   Trash2,
-  Activity
+  Activity,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
 export const BloodBankDashboard: React.FC = () => {
@@ -21,6 +23,7 @@ export const BloodBankDashboard: React.FC = () => {
   const [summary, setSummary] = useState<any>({ stock: {}, batches: {}, expiring_soon: [] });
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   // New stock item form state
   const [bloodGroup, setBloodGroup] = useState("A+");
@@ -249,67 +252,188 @@ export const BloodBankDashboard: React.FC = () => {
             </form>
           </div>
 
-          {/* Active Inventory Table */}
-          <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-lg font-bold">Active Inventory Batches</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-900 text-slate-400">
-                    <th className="pb-3 font-semibold">Batch ID</th>
-                    <th className="pb-3 font-semibold">Blood Group</th>
-                    <th className="pb-3 font-semibold">Volume</th>
-                    <th className="pb-3 font-semibold">Expiry Date</th>
-                    <th className="pb-3 font-semibold">Temp Status</th>
-                    <th className="pb-3 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-900">
-                  {inventory.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-900/30">
-                      <td className="py-3 font-mono text-slate-500">#INV-{item.id}</td>
-                      <td className="py-3 font-bold text-rose-400">{item.blood_group}</td>
-                      <td className="py-3 text-slate-300 font-semibold">{item.quantity} Units</td>
-                      <td className="py-3 text-slate-400">
-                        <div>{new Date(item.expiry_date).toLocaleDateString()}</div>
-                        {(() => {
-                          const daysLeft = Math.ceil((new Date(item.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                          const pct = Math.max(0, Math.min(100, (daysLeft / 35) * 100));
-                          const barColor = daysLeft < 5 ? "bg-red-500 animate-pulse" : daysLeft < 15 ? "bg-amber-500" : "bg-emerald-500";
-                          const textColor = daysLeft < 5 ? "text-red-400 font-bold" : daysLeft < 15 ? "text-amber-400" : "text-emerald-400";
-                          return (
-                            <div className="mt-1.5 space-y-1">
-                              <div className="w-24 h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
-                                <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }}></div>
-                              </div>
-                              <div className={`text-[9px] font-bold ${textColor}`}>
-                                {daysLeft <= 0 ? "Expired" : `${daysLeft} days remaining`}
+          {/* Active Inventory Table / Cards */}
+          {(() => {
+            // Group by blood group
+            const groups: { [key: string]: any[] } = {};
+            inventory.forEach(item => {
+              if (!groups[item.blood_group]) {
+                groups[item.blood_group] = [];
+              }
+              groups[item.blood_group].push(item);
+            });
+
+            // Sort batches inside each group by expiry date
+            Object.keys(groups).forEach(bg => {
+              groups[bg].sort((a, b) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
+            });
+
+            // Sort the blood groups by their earliest expiry date (FIFO sequence)
+            const sortedBloodGroups = Object.keys(groups).sort((a, b) => {
+              const expiryA = new Date(groups[a][0].expiry_date).getTime();
+              const expiryB = new Date(groups[b][0].expiry_date).getTime();
+              return expiryA - expiryB;
+            });
+
+            const toggleGroup = (bg: string) => {
+              setExpandedGroups(prev => 
+                prev.includes(bg) ? prev.filter(g => g !== bg) : [...prev, bg]
+              );
+            };
+
+            return (
+              <div className="lg:col-span-2 space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Database size={18} className="text-rose-500" />
+                    Active Inventory Batches
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Grouped by blood type. Sorted in First-In-First-Out (FIFO) sequence (earliest expiry first). Click a card to expand details.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {sortedBloodGroups.map(bg => {
+                    const batches = groups[bg];
+                    const totalQty = batches.reduce((sum, item) => sum + item.quantity, 0);
+                    const earliestBatch = batches[0];
+                    const isExpanded = expandedGroups.includes(bg);
+                    
+                    const earliestDaysLeft = Math.ceil((new Date(earliestBatch.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    const earliestPct = Math.max(0, Math.min(100, (earliestDaysLeft / 35) * 100));
+                    
+                    const cardBorderColor = earliestDaysLeft < 5 
+                      ? "border-red-500/30 hover:border-red-500/50" 
+                      : earliestDaysLeft < 15 
+                        ? "border-amber-500/30 hover:border-amber-500/50" 
+                        : "border-slate-800 hover:border-slate-700";
+
+                    const earliestStatusColor = earliestDaysLeft < 5 
+                      ? "text-red-400 font-extrabold" 
+                      : earliestDaysLeft < 15 
+                        ? "text-amber-400" 
+                        : "text-emerald-400";
+
+                    return (
+                      <div 
+                        key={bg} 
+                        className={`glass-panel rounded-2xl border transition-all duration-200 ${cardBorderColor}`}
+                      >
+                        {/* Main Card Header */}
+                        <div 
+                          onClick={() => toggleGroup(bg)}
+                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                              <span className="text-base font-black text-rose-500">{bg}</span>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Total Available</p>
+                              <p className="text-sm font-black text-slate-200">{totalQty} Units <span className="text-[10px] font-normal text-slate-400">({batches.length} batch{batches.length > 1 ? "es" : ""})</span></p>
+                            </div>
+                          </div>
+
+                          {/* Earliest Expiry Info */}
+                          <div className="flex items-center gap-4">
+                            <div className="text-left sm:text-right">
+                              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Earliest Expiry</p>
+                              <p className={`text-xs font-black ${earliestStatusColor}`}>
+                                {earliestDaysLeft <= 0 ? "Expired" : `${earliestDaysLeft} days left`}
+                              </p>
+                              <div className="w-20 h-1 bg-slate-950 border border-slate-900 rounded-full overflow-hidden mt-1 ml-0 sm:ml-auto">
+                                <div 
+                                  className={`h-full ${earliestDaysLeft < 5 ? "bg-red-500" : earliestDaysLeft < 15 ? "bg-amber-500" : "bg-emerald-500"}`}
+                                  style={{ width: `${earliestPct}%` }}
+                                ></div>
                               </div>
                             </div>
-                          );
-                        })()}
-                      </td>
-                      <td className="py-3 font-mono text-slate-400">{item.storage_temp}°C</td>
-                      <td className="py-3 text-right">
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
-                          title="Discard batch"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {inventory.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500">No active inventory registered.</td>
-                    </tr>
+                            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
+                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expandable Batches Detail Table */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-2 border-t border-slate-900/60 bg-slate-950/20 animate-in slide-in-from-top-2 duration-150">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left border-collapse text-[11px]">
+                                <thead>
+                                  <tr className="border-b border-slate-900 text-slate-500 font-bold uppercase tracking-wider">
+                                    <th className="pb-2 font-bold text-[9px]">Batch ID</th>
+                                    <th className="pb-2 font-bold text-[9px]">Volume</th>
+                                    <th className="pb-2 font-bold text-[9px]">Donation Date</th>
+                                    <th className="pb-2 font-bold text-[9px]">Expiry Date</th>
+                                    <th className="pb-2 font-bold text-[9px]">Temp</th>
+                                    <th className="pb-2 font-bold text-[9px]">Status</th>
+                                    <th className="pb-2 font-bold text-[9px] text-right">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-900">
+                                  {batches.map(item => {
+                                    const daysLeft = Math.ceil((new Date(item.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                                    const pct = Math.max(0, Math.min(100, (daysLeft / 35) * 100));
+                                    const barColor = daysLeft < 5 ? "bg-red-500 animate-pulse" : daysLeft < 15 ? "bg-amber-500" : "bg-emerald-500";
+                                    const textColor = daysLeft < 5 ? "text-red-400 font-bold" : daysLeft < 15 ? "text-amber-400" : "text-emerald-400";
+                                    
+                                    // Format donation date
+                                    const donationDate = item.created_at 
+                                      ? new Date(item.created_at).toLocaleDateString()
+                                      : new Date(new Date(item.expiry_date).getTime() - 35 * 86400000).toLocaleDateString();
+
+                                    return (
+                                      <tr key={item.id} className="hover:bg-slate-900/40 transition-colors">
+                                        <td className="py-2.5 font-mono text-slate-400 font-bold">#INV-{item.id}</td>
+                                        <td className="py-2.5 text-slate-300 font-extrabold">{item.quantity} Units</td>
+                                        <td className="py-2.5 text-slate-400">{donationDate}</td>
+                                        <td className="py-2.5 text-slate-400">
+                                          <div>{new Date(item.expiry_date).toLocaleDateString()}</div>
+                                          <div className="mt-1 space-y-1">
+                                            <div className="w-20 h-1 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
+                                              <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }}></div>
+                                            </div>
+                                            <div className={`text-[8px] font-bold ${textColor}`}>
+                                              {daysLeft <= 0 ? "Expired" : `${daysLeft} days left`}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td className="py-2.5 font-mono text-slate-400">{item.storage_temp ?? "4.0"}°C</td>
+                                        <td className="py-2.5">
+                                          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            {item.status}
+                                          </span>
+                                        </td>
+                                        <td className="py-2.5 text-right">
+                                          <button
+                                            onClick={() => handleDeleteItem(item.id)}
+                                            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                                            title="Discard batch"
+                                          >
+                                            <Trash2 size={13} />
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {sortedBloodGroups.length === 0 && (
+                    <div className="glass-panel p-8 text-center text-slate-500 rounded-2xl border border-slate-800">
+                      No active inventory registered.
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
