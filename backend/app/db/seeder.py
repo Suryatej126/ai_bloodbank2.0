@@ -146,23 +146,30 @@ def seed_db():
             
         # 3. CREATE INITIAL INVENTORY STOCK
         # Distribute available blood units among Hospitals and Blood Banks
+        # Seed individual units of quantity = 1.0 with differing expiry and donation dates
         blood_groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
         facilities = ["city_hospital@bloodbank.ai", "metro_clinic@bloodbank.ai", "redcross@bloodbank.ai", "lifesource@bloodbank.ai"]
         
         for fac_email in facilities:
             facility = db_users[fac_email]
             for bg in blood_groups:
-                # Rare groups have smaller supply, standard groups have larger supply
-                qty = random.randint(1, 4) if bg in ["AB-", "O-", "A-", "B-"] else random.randint(8, 15)
-                db_inv = Inventory(
-                    owner_id=facility.id,
-                    blood_group=bg,
-                    quantity=float(qty),
-                    expiry_date=date.today() + timedelta(days=random.randint(10, 35)),
-                    storage_temp=random.uniform(3.5, 4.5),
-                    status="available"
-                )
-                db.add(db_inv)
+                qty = random.randint(1, 3) if bg in ["AB-", "O-", "A-", "B-"] else random.randint(4, 8)
+                for i in range(qty):
+                    expiry_days = random.randint(5, 35)
+                    donation_days_ago = 35 - expiry_days
+                    created_time = datetime.utcnow() - timedelta(days=donation_days_ago)
+                    expiry_date_val = date.today() + timedelta(days=expiry_days)
+                    
+                    db_inv = Inventory(
+                        owner_id=facility.id,
+                        blood_group=bg,
+                        quantity=1.0,
+                        expiry_date=expiry_date_val,
+                        storage_temp=random.uniform(3.5, 4.5),
+                        status="available",
+                        created_at=created_time
+                    )
+                    db.add(db_inv)
                 
         # 4. CREATE SOME SEED EMERGENCY REQUESTS
         # Request 1: Critical AB- request by City Hospital

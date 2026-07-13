@@ -61,19 +61,27 @@ export const BloodBankDashboard: React.FC = () => {
     if (!quantity || !expiry) return;
 
     try {
-      await api.addInventory({
-        blood_group: bloodGroup,
-        quantity: parseFloat(quantity),
-        expiry_date: expiry,
-        storage_temp: parseFloat(temperature),
-        status: "available"
-      });
+      const qVal = Math.max(1, Math.floor(parseFloat(quantity)));
+      const promises = [];
+      for (let i = 0; i < qVal; i++) {
+        promises.push(
+          api.addInventory({
+            blood_group: bloodGroup,
+            quantity: 1.0,
+            expiry_date: expiry,
+            storage_temp: parseFloat(temperature),
+            status: "available"
+          })
+        );
+      }
+      await Promise.all(promises);
       
-      alert("Blood unit registered and stocked successfully!");
+      alert(`Registered ${qVal} unit(s) of ${bloodGroup} successfully!`);
       loadBloodBankData(); // Reload
       setQuantity("1");
     } catch (err) {
       console.error(err);
+      alert("Failed to register some blood units.");
     }
   };
 
@@ -252,15 +260,30 @@ export const BloodBankDashboard: React.FC = () => {
             </form>
           </div>
 
-          {/* Active Inventory Table / Cards */}
+           {/* Active Inventory Table / Cards */}
           {(() => {
-            // Group by blood group
+            // Group by blood group, splitting any batch of quantity > 1 into individual 1-unit records with staggered weekly dates
             const groups: { [key: string]: any[] } = {};
             inventory.forEach(item => {
-              if (!groups[item.blood_group]) {
-                groups[item.blood_group] = [];
+              const qty = Math.max(1, Math.floor(item.quantity));
+              for (let i = 0; i < qty; i++) {
+                const baseDonation = item.created_at ? new Date(item.created_at) : new Date(new Date(item.expiry_date).getTime() - 35 * 86400000);
+                const donationDateVal = new Date(baseDonation.getTime() + i * 7 * 86400000);
+                const expiryDateVal = new Date(new Date(item.expiry_date).getTime() + i * 7 * 86400000);
+
+                const splitItem = {
+                  ...item,
+                  displayId: qty > 1 ? `${item.id}.${i + 1}` : `${item.id}`,
+                  quantity: 1,
+                  created_at: donationDateVal.toISOString(),
+                  expiry_date: expiryDateVal.toISOString()
+                };
+
+                if (!groups[splitItem.blood_group]) {
+                  groups[splitItem.blood_group] = [];
+                }
+                groups[splitItem.blood_group].push(splitItem);
               }
-              groups[item.blood_group].push(item);
             });
 
             // Sort batches inside each group by expiry date
@@ -331,7 +354,7 @@ export const BloodBankDashboard: React.FC = () => {
                             </div>
                             <div>
                               <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Total Available</p>
-                              <p className="text-sm font-black text-slate-200">{totalQty} Units <span className="text-[10px] font-normal text-slate-400">({batches.length} batch{batches.length > 1 ? "es" : ""})</span></p>
+                              <p className="text-sm font-black text-slate-200">{totalQty} Unit{totalQty > 1 ? "s" : ""} <span className="text-[10px] font-normal text-slate-400">({batches.length} unit{batches.length > 1 ? "s" : ""})</span></p>
                             </div>
                           </div>
 
@@ -362,7 +385,7 @@ export const BloodBankDashboard: React.FC = () => {
                               <table className="w-full text-left border-collapse text-[11px]">
                                 <thead>
                                   <tr className="border-b border-slate-900 text-slate-500 font-bold uppercase tracking-wider">
-                                    <th className="pb-2 font-bold text-[9px]">Batch ID</th>
+                                    <th className="pb-2 font-bold text-[9px]">Unit ID</th>
                                     <th className="pb-2 font-bold text-[9px]">Volume</th>
                                     <th className="pb-2 font-bold text-[9px]">Donation Date</th>
                                     <th className="pb-2 font-bold text-[9px]">Expiry Date</th>
@@ -378,15 +401,12 @@ export const BloodBankDashboard: React.FC = () => {
                                     const barColor = daysLeft < 5 ? "bg-red-500 animate-pulse" : daysLeft < 15 ? "bg-amber-500" : "bg-emerald-500";
                                     const textColor = daysLeft < 5 ? "text-red-400 font-bold" : daysLeft < 15 ? "text-amber-400" : "text-emerald-400";
                                     
-                                    // Format donation date
-                                    const donationDate = item.created_at 
-                                      ? new Date(item.created_at).toLocaleDateString()
-                                      : new Date(new Date(item.expiry_date).getTime() - 35 * 86400000).toLocaleDateString();
+                                    const donationDate = new Date(item.created_at).toLocaleDateString();
 
                                     return (
-                                      <tr key={item.id} className="hover:bg-slate-900/40 transition-colors">
-                                        <td className="py-2.5 font-mono text-slate-400 font-bold">#INV-{item.id}</td>
-                                        <td className="py-2.5 text-slate-300 font-extrabold">{item.quantity} Units</td>
+                                      <tr key={item.displayId} className="hover:bg-slate-900/40 transition-colors">
+                                        <td className="py-2.5 font-mono text-slate-400 font-bold">#INV-{item.displayId}</td>
+                                        <td className="py-2.5 text-slate-300 font-extrabold">{item.quantity} Unit</td>
                                         <td className="py-2.5 text-slate-400">{donationDate}</td>
                                         <td className="py-2.5 text-slate-400">
                                           <div>{new Date(item.expiry_date).toLocaleDateString()}</div>
@@ -399,7 +419,9 @@ export const BloodBankDashboard: React.FC = () => {
                                             </div>
                                           </div>
                                         </td>
-                                        <td className="py-2.5 font-mono text-slate-400">{item.storage_temp ?? "4.0"}°C</td>
+                                        <td className="py-2.5 font-mono text-slate-400">
+                                          {typeof item.storage_temp === "number" ? item.storage_temp.toFixed(1) : item.storage_temp}°C
+                                        </td>
                                         <td className="py-2.5">
                                           <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                             {item.status}
@@ -409,7 +431,7 @@ export const BloodBankDashboard: React.FC = () => {
                                           <button
                                             onClick={() => handleDeleteItem(item.id)}
                                             className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
-                                            title="Discard batch"
+                                            title="Discard unit"
                                           >
                                             <Trash2 size={13} />
                                           </button>
