@@ -31,60 +31,14 @@ const BloodBankDashboard = safeLazy(() => import("./pages/BloodBankDashboard").t
 const DonorDashboard = safeLazy(() => import("./pages/DonorDashboard").then(module => ({ default: module.DonorDashboard })));
 const PatientDashboard = safeLazy(() => import("./pages/PatientDashboard").then(module => ({ default: module.PatientDashboard })));
 
-// Reusable Premium White-Themed Loading Animation (0.8s loop speed)
+// Reusable Premium Loader placeholder (You can replace this with your custom loader component)
 const PremiumLoader: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white text-slate-800 flex flex-col items-center justify-center select-none overflow-hidden relative z-50">
-      {/* Glow background */}
-      <div 
-        className="absolute w-[250px] h-[250px] bg-red-500/10 rounded-full blur-[80px] pointer-events-none" 
-        style={{ animation: "glow-pulse 1.6s ease-in-out infinite" }}
-      ></div>
-      
-      {/* Animation viewport */}
-      <div className="relative w-[300px] h-[300px] flex items-center justify-center">
-        
-        {/* Floating dust particles */}
-        <div className="absolute w-2 h-2 rounded-full bg-red-500/20 particle-left" style={{ top: "25%", left: "40%" }}></div>
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-red-500/20 particle-right" style={{ top: "35%", right: "35%" }}></div>
-        <div className="absolute w-1 h-1 rounded-full bg-red-500/15 particle-left" style={{ top: "55%", left: "30%" }}></div>
-        
-        {/* Ripple ring on floor */}
-        <div 
-          className="absolute w-24 h-6 border border-red-500 rounded-full pointer-events-none"
-          style={{ top: "220px", animation: "ripple-expand 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite" }}
-        ></div>
-
-        {/* Splash droplets */}
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-red-600 splash-1" style={{ top: "225px" }}></div>
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-red-600 splash-2" style={{ top: "225px" }}></div>
-        
-        {/* Falling Blood Droplet */}
-        <div 
-          className="absolute"
-          style={{ animation: "drop-fall 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite" }}
-        >
-          {/* Droplet Body */}
-          <div 
-            className="w-7 h-7 relative"
-            style={{ 
-              borderRadius: "0% 100% 100% 100%", 
-              background: "radial-gradient(circle at 35% 35%, #ff4d4d 0%, #dc2626 40%, #991b1b 100%)",
-              boxShadow: "inset -2px -2px 6px rgba(0, 0, 0, 0.4), 2px 4px 6px rgba(153, 27, 27, 0.2)",
-              animation: "drop-stretch-wobble 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite"
-            }}
-          >
-            {/* Glossy highlight dot */}
-            <div className="absolute w-1.5 h-2 bg-white/60 rounded-full" style={{ top: "15%", left: "15%", transform: "rotate(-45deg)" }}></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Connecting Text */}
-      <div className="mt-4 flex flex-col items-center space-y-2">
-        <p className="text-sm font-bold text-slate-500 tracking-widest uppercase flex items-center">
-          Connecting to Blood Network
-          <span className="animate-dot"></span>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center select-none overflow-hidden relative z-50">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm font-bold text-slate-400 tracking-widest uppercase">
+          Loading...
         </p>
       </div>
     </div>
