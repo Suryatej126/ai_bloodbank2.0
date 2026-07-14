@@ -137,50 +137,25 @@ export const LandingPage: React.FC = () => {
 
   if (showIntro) {
     return (
-      <div className={`fixed inset-0 w-screen h-screen h-[100dvh] z-50 bg-slate-950 select-none overflow-hidden flex flex-col justify-between ${fadeClass}`}>
-        {/* Mobile Header (only visible on mobile, under sm) */}
-        <div className="flex sm:hidden flex-col items-center pt-8 pb-2 px-4 select-none">
-          <div className="w-10 h-10 relative flex-shrink-0 animate-pulse mb-2.5" style={{ filter: "drop-shadow(0px 2px 4px rgba(153, 27, 27, 0.3))" }}>
-            <div 
-              className="w-full h-full"
-              style={{ 
-                borderRadius: "0% 100% 100% 100%", 
-                background: "radial-gradient(circle at 35% 35%, #ff4d4d 0%, #dc2626 40%, #991b1b 100%)",
-                boxShadow: "inset -2px -2px 6px rgba(0, 0, 0, 0.4), 2px 4px 6px rgba(153, 27, 27, 0.2)",
-                transform: "rotate(45deg)"
-              }}
-            >
-              <div className="absolute w-2.5 h-3 bg-white/70 rounded-full" style={{ top: "15%", left: "15%", transform: "rotate(-45deg)" }}></div>
-            </div>
-          </div>
-          <h1 className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none py-0.5 text-center">
-            LIFE CARE
-          </h1>
-          <p className="text-[10px] text-rose-500 uppercase tracking-widest font-semibold mt-1 text-center">
-            ai smart blood bank
-          </p>
-        </div>
+      <div className={`fixed inset-0 w-screen h-screen h-[100dvh] z-50 bg-[#c8c2b5] sm:bg-slate-950 select-none overflow-hidden ${fadeClass}`}>
+        {/* Full-Screen Video (contain on mobile to prevent logo/subtitle crop, cover on desktop) */}
+        <video
+          className="absolute inset-0 w-full h-full object-contain sm:object-cover sm:object-center"
+          autoPlay
+          muted={isMuted}
+          playsInline
+          onEnded={handleSkipIntro}
+        >
+          <source src="/intro.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
 
-        {/* Video Container (stretches to fill viewport on desktop, responsive card on mobile) */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-0 relative">
-          <video
-            className="w-full aspect-video rounded-2xl border border-slate-800/80 shadow-2xl object-cover sm:absolute sm:inset-0 sm:w-full sm:h-full sm:object-cover sm:object-center sm:rounded-none sm:border-none sm:shadow-none"
-            autoPlay
-            muted={isMuted}
-            playsInline
-            onEnded={handleSkipIntro}
-          >
-            <source src="/intro.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
-        {/* Controls container (positioned below video on mobile, absolute overlay at bottom on desktop) */}
-        <div className="w-full pb-8 pt-4 px-4 sm:absolute sm:inset-x-0 sm:bottom-10 sm:px-8 md:px-16 flex flex-col sm:flex-row gap-3 sm:gap-0 items-center justify-between z-10">
+        {/* Overlay controls inside the video container at the bottom */}
+        <div className="absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex flex-col sm:flex-row gap-3 sm:gap-0 items-center justify-between z-10">
           {/* Glassy Mute/Unmute button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="flex items-center gap-2 px-6 py-3.5 sm:py-3 rounded-2xl backdrop-blur-md bg-slate-900/60 sm:bg-slate-950/40 hover:bg-slate-950/60 border border-slate-800 sm:border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 px-6 py-3.5 sm:py-3 rounded-2xl bg-slate-950 sm:backdrop-blur-md sm:bg-slate-950/40 hover:bg-slate-900 sm:hover:bg-slate-950/60 border border-slate-800 sm:border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto justify-center"
           >
             {isMuted ? (
               <>
@@ -196,7 +171,7 @@ export const LandingPage: React.FC = () => {
           {/* Glassy Skip Intro button */}
           <button
             onClick={handleSkipIntro}
-            className="group flex items-center gap-2 px-7 py-4 sm:py-3.5 rounded-2xl backdrop-blur-md bg-rose-600/60 sm:bg-rose-600/40 hover:bg-rose-600/80 sm:hover:bg-rose-600/60 border border-rose-500/30 text-xs font-black text-white shadow-xl shadow-rose-600/10 hover:shadow-rose-500/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
+            className="group flex items-center gap-2 px-7 py-4 sm:py-3.5 rounded-2xl bg-rose-600 sm:backdrop-blur-md sm:bg-rose-600/40 hover:bg-rose-500 sm:hover:bg-rose-600/60 border border-rose-500/30 text-xs font-black text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
           >
             Skip Onboarding
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
