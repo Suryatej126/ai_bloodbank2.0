@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onClos
               </div>
             </div>
             <div>
-              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
+              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-normal py-0.5">
                 LIFE CARE
               </h1>
               <p className="text-[10px] text-rose-500 uppercase tracking-widest font-semibold mt-1">

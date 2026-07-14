@@ -137,10 +137,10 @@ export const LandingPage: React.FC = () => {
 
   if (showIntro) {
     return (
-      <div className={`fixed inset-0 z-50 bg-slate-950 select-none overflow-hidden ${fadeClass}`}>
+      <div className={`fixed inset-0 w-screen h-screen h-[100dvh] z-50 bg-slate-950 select-none overflow-hidden ${fadeClass}`}>
         {/* Full-Screen Video (stretches to fill viewport) */}
         <video
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
           autoPlay
           muted={isMuted}
           playsInline
@@ -200,7 +200,7 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
           <div>
-            <h1 className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
+            <h1 className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-normal py-0.5">
               LIFE CARE
             </h1>
             <p className="text-[10px] text-rose-500 uppercase tracking-widest font-semibold mt-1">
