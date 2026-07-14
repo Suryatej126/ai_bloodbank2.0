@@ -1416,7 +1416,7 @@ export const DonorDashboard: React.FC = () => {
       {/* Certificate Modal Overlay */}
       {activeCert && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-[500px] bg-slate-900 border border-slate-800 rounded-3xl p-8 relative shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setActiveCert(null)}
               className="absolute right-6 top-6 text-slate-400 hover:text-slate-200 text-sm font-semibold cursor-pointer"

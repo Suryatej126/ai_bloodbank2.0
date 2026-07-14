@@ -87,14 +87,15 @@ export const Chatbot: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 select-none">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 select-none">
       {/* Floating Toggle Icon */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-rose-600 hover:bg-rose-500 text-white rounded-full p-4 shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center border border-rose-500/20 shadow-rose-600/30 cursor-pointer"
+          className="bg-rose-600 hover:bg-rose-500 text-white rounded-full p-3.5 sm:p-4 shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center border border-rose-500/20 shadow-rose-600/30 cursor-pointer"
         >
-          <MessageSquare size={24} />
+          <MessageSquare size={22} className="sm:hidden" />
+          <MessageSquare size={24} className="hidden sm:block" />
           <span className="absolute -top-1 -right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
@@ -104,7 +105,7 @@ export const Chatbot: React.FC = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-[380px] h-[520px] glass-panel rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-800 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="w-[calc(100vw-2rem)] sm:w-[380px] h-[480px] sm:h-[520px] max-h-[calc(100vh-6rem)] glass-panel rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-800 animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-red-700 to-rose-600 p-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-2.5">

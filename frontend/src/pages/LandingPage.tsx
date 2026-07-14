@@ -184,7 +184,7 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-rose-500 selection:text-white">
       {/* Header */}
-      <header className="max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between z-10">
+      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
         <div className="flex items-center gap-3 select-none">
           <div className="w-10 h-10 relative flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0px 2px 4px rgba(153, 27, 27, 0.3))" }}>
             <div 
@@ -209,23 +209,24 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
           <button 
             onClick={() => setIsSosChoiceOpen(true)}
-            className="px-4 py-2 rounded-xl text-xs font-black bg-red-600 hover:bg-red-500 text-white border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_20px_rgba(220,38,38,0.7)] transition-all duration-300 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            className="px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black bg-red-600 hover:bg-red-500 text-white border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_20px_rgba(220,38,38,0.7)] transition-all duration-300 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
           >
             <AlertCircle size={14} />
-            SOS Emergency
+            <span className="hidden sm:inline">SOS Emergency</span>
+            <span className="sm:hidden">SOS</span>
           </button>
           <button 
             onClick={() => navigate("/login")}
-            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-900 text-slate-300 hover:text-white transition-all cursor-pointer"
+            className="px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-900 text-slate-300 hover:text-white transition-all cursor-pointer"
           >
             Login
           </button>
           <button 
             onClick={() => navigate("/login?mode=register")}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 cursor-pointer"
+            className="px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 cursor-pointer"
           >
             Register
           </button>
@@ -233,31 +234,31 @@ export const LandingPage: React.FC = () => {
       </header>
 
       {/* Main Hero */}
-      <main className="max-w-7xl mx-auto w-full px-6 flex-1 py-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        <div className="space-y-8 animate-in fade-in slide-in-from-left-5 duration-300">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 flex-1 py-6 sm:py-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-left-5 duration-300">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold">
             <Brain size={14} />
             AI-Driven Medical Innovation
           </div>
           
-          <h2 className="text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
             The Digital Blood Bank, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-orange-400">
               Powered by AI.
             </span>
           </h2>
           
-          <p className="text-slate-400 text-base max-w-lg leading-relaxed">
+          <p className="text-slate-400 text-sm sm:text-base max-w-lg leading-relaxed">
             Eliminating shortages, prioritizing critical emergencies, and mapping compatible donors in real-time. Join the smart network saving lives through intelligent automation.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button 
               onClick={() => {
                 resetDonateForm();
                 setIsDonateOpen(true);
               }}
-              className="flex items-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
+              className="flex items-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 bg-rose-600 hover:bg-rose-500 text-white text-sm sm:text-base font-bold rounded-2xl shadow-xl shadow-rose-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
               <Heart size={18} className="fill-white" />
               Quick Donate Blood
@@ -267,7 +268,7 @@ export const LandingPage: React.FC = () => {
                 resetRequestForm();
                 setIsRequestOpen(true);
               }}
-              className="flex items-center gap-2 px-6 py-3.5 border border-slate-800 bg-slate-900/40 hover:bg-slate-900 rounded-2xl font-bold text-slate-300 hover:text-white transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
+              className="flex items-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 border border-slate-800 bg-slate-900/40 hover:bg-slate-900 rounded-2xl text-sm sm:text-base font-bold text-slate-300 hover:text-white transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200"
             >
               <Droplet size={18} className="text-rose-500" />
               Request Blood
@@ -275,18 +276,18 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-900">
+          <div className="grid grid-cols-3 gap-4 sm:gap-6 pt-6 border-t border-slate-900">
             <div>
-              <p className="text-2xl font-black text-rose-400">99.4%</p>
-              <p className="text-xs text-slate-500 font-medium">Match Accuracy</p>
+              <p className="text-xl sm:text-2xl font-black text-rose-400">99.4%</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Match Accuracy</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-rose-400">&lt; 4 Min</p>
-              <p className="text-xs text-slate-500 font-medium">SOS Dispatch Time</p>
+              <p className="text-xl sm:text-2xl font-black text-rose-400">&lt; 4 Min</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium">SOS Dispatch Time</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-rose-400">8,500+</p>
-              <p className="text-xs text-slate-500 font-medium">Lives Reached</p>
+              <p className="text-xl sm:text-2xl font-black text-rose-400">8,500+</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Lives Reached</p>
             </div>
           </div>
         </div>

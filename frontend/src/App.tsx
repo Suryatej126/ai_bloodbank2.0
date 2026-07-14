@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { api } from "./services/api";
 import { Sidebar } from "./components/Sidebar";
 import { Chatbot } from "./components/Chatbot";
+import { Menu } from "lucide-react";
 // Safe dynamic import loader wrapper to handle deployment updates/chunk load failures
 const safeLazy = (importFn: () => Promise<any>) => {
   return React.lazy(async () => {
@@ -131,18 +132,39 @@ export const App: React.FC = () => {
 
   // Dashboard Wrapper Component
   const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     if (!token || !role) {
       return <Navigate to="/login" replace />;
     }
     return (
-      <div className="flex bg-slate-950 min-h-screen">
-        <Sidebar role={role} onLogout={handleLogout} />
+      <div className="flex bg-slate-950 min-h-screen relative overflow-x-hidden">
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-slate-950/65 backdrop-blur-xs md:hidden cursor-pointer"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        <Sidebar 
+          role={role} 
+          onLogout={handleLogout} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
         <div className="flex-1 flex flex-col min-w-0">
           {/* ===== TOP HEADER BAR ===== */}
-          <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-3 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold">
+          <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 border border-slate-800 md:hidden cursor-pointer"
+              >
+                <Menu size={18} />
+              </button>
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold hidden sm:inline">
                 LIFE CARE · AI Smart Blood Bank
+              </span>
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold sm:hidden">
+                LIFE CARE
               </span>
             </div>
             {/* Logo — replace logo.png in /public to update */}
