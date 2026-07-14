@@ -151,11 +151,11 @@ export const LandingPage: React.FC = () => {
         </video>
 
         {/* Overlay controls inside the video container at the bottom */}
-        <div className="absolute inset-x-0 bottom-10 px-8 md:px-16 flex items-center justify-between z-10">
+        <div className="absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex flex-col sm:flex-row gap-3 sm:gap-0 items-center justify-between z-10">
           {/* Glassy Mute/Unmute button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl backdrop-blur-md bg-slate-950/40 hover:bg-slate-950/60 border border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl backdrop-blur-md bg-slate-950/40 hover:bg-slate-950/60 border border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto justify-center"
           >
             {isMuted ? (
               <>
@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
           {/* Glassy Skip Intro button */}
           <button
             onClick={handleSkipIntro}
-            className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl backdrop-blur-md bg-rose-600/40 hover:bg-rose-600/60 border border-rose-500/30 text-xs font-black text-white shadow-xl shadow-rose-600/10 hover:shadow-rose-500/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="group flex items-center gap-2 px-7 py-3.5 rounded-2xl backdrop-blur-md bg-rose-600/40 hover:bg-rose-600/60 border border-rose-500/30 text-xs font-black text-white shadow-xl shadow-rose-600/10 hover:shadow-rose-500/20 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
           >
             Skip Onboarding
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />

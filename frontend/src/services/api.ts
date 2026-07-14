@@ -4,7 +4,22 @@ if (rawApiUrl && !rawApiUrl.endsWith("/api/v1")) {
 }
 const API_URL = rawApiUrl;
 
-
+// Redefine fetch with timeout to prevent hanging on backend connection issues
+const fetch = async (resource: string | RequestInfo | URL, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 1000); // 1.0 second timeout
+  try {
+    const response = await window.fetch(resource, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
 
 // Helper to get auth headers
 const getHeaders = () => {
