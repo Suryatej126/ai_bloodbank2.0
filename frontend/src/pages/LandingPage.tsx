@@ -151,11 +151,11 @@ export const LandingPage: React.FC = () => {
         </video>
 
         {/* Overlay controls inside the video container at the bottom */}
-        <div className="absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex flex-col sm:flex-row gap-3 sm:gap-0 items-center justify-between z-10">
+        <div className="absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex flex-row gap-2.5 sm:gap-0 items-center justify-center sm:justify-between z-10">
           {/* Glassy Mute/Unmute button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="flex items-center gap-2 px-6 py-3.5 sm:py-3 rounded-2xl bg-slate-950 sm:backdrop-blur-md sm:bg-slate-950/40 hover:bg-slate-900 sm:hover:bg-slate-950/60 border border-slate-800 sm:border-white/10 text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto justify-center"
+            className="flex items-center gap-1.5 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-slate-950 sm:backdrop-blur-md sm:bg-slate-950/40 hover:bg-slate-900 sm:hover:bg-slate-950/60 border border-slate-800 sm:border-white/10 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer flex-1 sm:flex-none justify-center"
           >
             {isMuted ? (
               <>
@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
           {/* Glassy Skip Intro button */}
           <button
             onClick={handleSkipIntro}
-            className="group flex items-center gap-2 px-7 py-4 sm:py-3.5 rounded-2xl bg-rose-600 sm:backdrop-blur-md sm:bg-rose-600/40 hover:bg-rose-500 sm:hover:bg-rose-600/60 border border-rose-500/30 text-xs font-black text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer w-full sm:w-auto justify-center"
+            className="group flex items-center gap-1.5 px-4 py-2.5 sm:px-7 sm:py-3.5 rounded-xl bg-rose-600 sm:backdrop-blur-md sm:bg-rose-600/40 hover:bg-rose-500 sm:hover:bg-rose-600/60 border border-rose-500/30 text-[11px] sm:text-xs font-black text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex-1 sm:flex-none justify-center"
           >
             Skip Onboarding
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
