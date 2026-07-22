@@ -486,9 +486,16 @@ export const api = {
 
   chatbotQuery: async (message: string) => {
     try {
+      const customKey = localStorage.getItem("gemini_api_key");
+      const headers: Record<string, string> = {
+        ...getHeaders() as any,
+      };
+      if (customKey) {
+        headers["X-Gemini-Key"] = customKey;
+      }
       const response = await fetch(`${API_URL}/ai/chatbot`, {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify({ messages: [{ role: "user", content: message }] }),
       });
       if (!response.ok) throw new Error("Chatbot error");

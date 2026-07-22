@@ -371,12 +371,12 @@ def detect_fraud_and_duplicates(national_id, phone, email, lat, lon, existing_us
             
     return len(reasons) > 0, reasons
 
-def run_chatbot_query(query, current_user_role="guest"):
+def run_chatbot_query(query, current_user_role="guest", api_key=None):
     """
     AI Chatbot engine. Handles blood queries, eligibility inquiries, and donor support.
     """
     # 1. Check if Gemini API key is configured
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    gemini_api_key = api_key or os.getenv("GEMINI_API_KEY")
     if gemini_api_key:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"

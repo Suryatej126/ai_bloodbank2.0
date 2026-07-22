@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.core.database import get_db
-from app.core.security import get_current_user, RoleChecker
+from app.core.security import get_current_user, get_current_user_optional, RoleChecker
 from app.models.models import User, BloodRequest, Profile, Inventory
 from app.schemas.schemas import (
     DonorRecommendation, ShortagePredictionResponse, EligibilityCheckRequest,
@@ -14,7 +14,7 @@ from app.ai.engine import (
 )
 import joblib
 import os
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/ai", tags=["AI Prediction Module"])
 
@@ -143,13 +143,15 @@ def check_eligibility(req: EligibilityCheckRequest):
 @router.post("/chatbot", response_model=ChatResponse)
 def process_chatbot_query(
     chat_req: ChatRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    x_gemini_key: Optional[str] = Header(None)
 ):
     # Fetch last message
     if not chat_req.messages:
         raise HTTPException(status_code=400, detail="No messages provided")
         
     last_user_message = chat_req.messages[-1].content
-    response = run_chatbot_query(last_user_message, current_user_role=current_user.role)
+    role = current_user.role if current_user else "guest"
+    response = run_chatbot_query(last_user_message, current_user_role=role, api_key=x_gemini_key)
     
     return ChatResponse(response=response)
