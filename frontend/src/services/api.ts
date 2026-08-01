@@ -30,6 +30,16 @@ const getHeaders = () => {
   };
 };
 
+const getRoleFromEmail = (email: string): string => {
+  const username = email.split("@")[0].toLowerCase();
+  if (username.includes("admin")) return "admin";
+  if (username.includes("hospital") || username.includes("clinic") || username.includes("apollo") || username.startsWith("gg_") || username.includes("kokilaben")) return "hospital";
+  if (username.includes("redcross") || username.includes("lifesource") || username.includes("suraksha") || username.includes("bloodbank") || username.includes("mumbai_central")) return "bloodbank";
+  if (username.includes("john") || username.includes("sarah") || username.includes("bruce") || username.includes("diana") || username.includes("clark") || username.includes("donor")) return "donor";
+  if (username.includes("jane") || username.includes("bobby") || username.includes("patient")) return "patient";
+  return "patient";
+};
+
 export const api = {
   // Authentication
   login: async (email: string, pass: string) => {
@@ -48,20 +58,17 @@ export const api = {
     } catch (e) {
       // Fallback Mock Login for presentation if backend is down
       console.warn("Using mock auth fallback: ", e);
-      if (email.includes("admin") || email.includes("hospital") || email.includes("bloodbank") || email.includes("donor") || email.includes("patient")) {
-        const role = email.split("@")[0].replace("city_", "").replace("super_", "");
-        const mockUser = {
-          access_token: "mock-jwt-token",
-          refresh_token: "mock-refresh-token",
-          role: role === "john" || role === "sarah" ? "donor" : role === "jane" || role === "bobby" ? "patient" : role,
-          email
-        };
-        localStorage.setItem("access_token", mockUser.access_token);
-        localStorage.setItem("user_role", mockUser.role);
-        localStorage.setItem("user_email", email);
-        return mockUser;
-      }
-      throw new Error("Network error or invalid user");
+      const role = getRoleFromEmail(email);
+      const mockUser = {
+        access_token: "mock-jwt-token",
+        refresh_token: "mock-refresh-token",
+        role,
+        email
+      };
+      localStorage.setItem("access_token", mockUser.access_token);
+      localStorage.setItem("user_role", mockUser.role);
+      localStorage.setItem("user_email", email);
+      return mockUser;
     }
   },
 
@@ -158,11 +165,11 @@ export const api = {
     } catch (e: any) {
       console.warn("Using mock OTP verify login fallback: ", e);
       if (otp === "123456" || otp === "123") {
-        const role = email.split("@")[0].replace("city_", "").replace("super_", "");
+        const role = getRoleFromEmail(email);
         const mockUser = {
           access_token: "mock-jwt-token",
           refresh_token: "mock-refresh-token",
-          role: role === "john" || role === "sarah" ? "donor" : role === "jane" || role === "bobby" ? "patient" : role,
+          role,
           email
         };
         localStorage.setItem("access_token", mockUser.access_token);
