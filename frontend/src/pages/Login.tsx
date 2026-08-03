@@ -926,19 +926,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3.5 text-center">
                       Quick Evaluator Autofill
                     </p>
-                    <div className="grid grid-cols-5 gap-1.5">
+                    <div className="flex flex-wrap justify-center gap-1.5">
                       {[
                         { id: "admin", label: "Admin" },
-                        { id: "hospital", label: "Hosp" },
-                        { id: "bloodbank", label: "Bank" },
+                        { id: "hospital", label: "Hospital" },
+                        { id: "bloodbank", label: "Blood Bank" },
                         { id: "donor", label: "Donor" },
-                        { id: "patient", label: "Pat" }
+                        { id: "patient", label: "Patient" }
                       ].map((item) => (
                         <button
                           key={item.id}
                           type="button"
                           onClick={() => autofill(item.id)}
-                          className={`py-2 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${selectedRole === item.id
+                          className={`px-3 py-2 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${selectedRole === item.id
                               ? "bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/20"
                               : "bg-white/[0.01] hover:bg-white/[0.03] border-white/5 text-slate-400 hover:text-slate-200"
                             }`}
