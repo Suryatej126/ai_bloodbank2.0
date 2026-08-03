@@ -70,6 +70,7 @@ export const LandingPage: React.FC = () => {
   const [donateConditions, setDonateConditions] = useState(false);
   const [donateLoading, setDonateLoading] = useState(false);
   const [donateResult, setDonateResult] = useState<any>(null);
+  const [donateNeverDonated, setDonateNeverDonated] = useState(false);
 
   // Request Form State
   const [requestName, setRequestName] = useState("");
@@ -146,6 +147,7 @@ export const LandingPage: React.FC = () => {
     setDonateLastDonation("");
     setDonateConditions(false);
     setDonateResult(null);
+    setDonateNeverDonated(false);
   };
 
   const resetRequestForm = () => {
@@ -755,13 +757,29 @@ export const LandingPage: React.FC = () => {
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Last Donation (months)</label>
                       <input
-                        type="number"
-                        required
-                        value={donateLastDonation}
+                        type={donateNeverDonated ? "text" : "number"}
+                        disabled={donateNeverDonated}
+                        value={donateNeverDonated ? "Never" : donateLastDonation}
                         onChange={(e) => setDonateLastDonation(e.target.value)}
                         placeholder="e.g. 4"
-                        className="w-full bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500 transition-all"
+                        className="w-full bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500 transition-all disabled:opacity-50"
                       />
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="checkbox"
+                          id="landing-never-donated-check"
+                          checked={donateNeverDonated}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setDonateNeverDonated(checked);
+                            setDonateLastDonation(checked ? "999" : "4");
+                          }}
+                          className="rounded border-white/10 text-rose-600 bg-slate-950 focus:ring-rose-500 cursor-pointer"
+                        />
+                        <label htmlFor="landing-never-donated-check" className="text-[9px] text-slate-500 cursor-pointer select-none">
+                          Never donated blood before
+                        </label>
+                      </div>
                     </div>
                   </div>
 

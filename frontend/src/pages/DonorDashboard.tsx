@@ -296,6 +296,7 @@ export const DonorDashboard: React.FC = () => {
   const [weight, setWeight] = useState("68");
   const [hemoglobin, setHemoglobin] = useState("14.5");
   const [lastMonths, setLastMonths] = useState("4");
+  const [neverDonated, setNeverDonated] = useState(false);
   const [conditions, setConditions] = useState(false);
   const [travel, setTravel] = useState(false);
   const [vaccine, setVaccine] = useState(false);
@@ -1114,13 +1115,30 @@ export const DonorDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[9px] font-black uppercase text-slate-450">Months Since Last Donation</label>
+                  <label className="block text-[9px] font-black uppercase tracking-wider text-slate-450">Months Since Last Donation</label>
                   <input
-                    type="number"
-                    value={lastMonths}
+                    type={neverDonated ? "text" : "number"}
+                    disabled={neverDonated}
+                    value={neverDonated ? "Never" : lastMonths}
                     onChange={(e) => setLastMonths(e.target.value)}
-                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100"
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 disabled:opacity-50"
                   />
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="checkbox"
+                      id="never-donated-check"
+                      checked={neverDonated}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setNeverDonated(checked);
+                        setLastMonths(checked ? "999" : "4");
+                      }}
+                      className="rounded border-white/10 text-rose-600 bg-slate-950 focus:ring-rose-500 cursor-pointer"
+                    />
+                    <label htmlFor="never-donated-check" className="text-[9px] text-slate-500 cursor-pointer select-none">
+                      Never donated blood before
+                    </label>
+                  </div>
                 </div>
 
                 <div className="space-y-3.5 pt-2 border-t border-white/5">
