@@ -324,6 +324,24 @@ export const DonorDashboard: React.FC = () => {
   const [appointmentTime, setAppointmentTime] = useState("10:00");
   const [scheduledAppts, setScheduledAppts] = useState<any[]>([]);
 
+  // Blood test booking form states
+  const [testBooking, setTestBooking] = useState<any | null>(null);
+
+  const handleBookTest = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestBooking({
+      id: Date.now(),
+      center: selectedCenter,
+      city: selectedCity,
+      date: appointmentDate,
+      time: appointmentTime
+    });
+    setToast({
+      message: "🔬 Blood Typing Test scheduled successfully!",
+      type: "success"
+    });
+  };
+
   // City and hospital dynamic selection
   const [facilities, setFacilities] = useState<any[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -1410,6 +1428,148 @@ export const DonorDashboard: React.FC = () => {
             </div>
           </div>
         )
+      )}
+
+      {/* ================= BLOOD TYPING TEST TAB ================= */}
+      {currentTab === "bloodtest" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
+          {/* Reservation Form */}
+          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
+              <Activity size={18} />
+              Book Blood Typing Test
+            </h3>
+            <p className="text-xs text-slate-400">
+              Don't know your blood group? Book a quick, free blood typing test at one of our partner medical centers.
+            </p>
+            <form onSubmit={handleBookTest} className="space-y-4 text-xs">
+              {/* Select City */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Select City</label>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => handleCityChange(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
+                >
+                  {cities.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                  {cities.length === 0 && (
+                    <option value="">No cities available</option>
+                  )}
+                </select>
+              </div>
+
+              {/* Select Hospital */}
+              <div className="space-y-1">
+                <label className="font-bold text-slate-400 uppercase tracking-wider">Select Hospital / Clinic</label>
+                <select
+                  value={selectedCenter}
+                  onChange={(e) => setSelectedCenter(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
+                >
+                  {filteredHospitals.map((hosp) => (
+                    <option key={hosp.name} value={hosp.name}>{hosp.name}</option>
+                  ))}
+                  {filteredHospitals.length === 0 && (
+                    <option value="">No hospitals available in this city</option>
+                  )}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Date</label>
+                  <input
+                    type="date"
+                    required
+                    min={new Date().toISOString().split("T")[0]}
+                    value={appointmentDate}
+                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={appointmentTime}
+                    onChange={(e) => setAppointmentTime(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20 text-center"
+              >
+                Schedule Free Typing Test
+              </button>
+            </form>
+          </div>
+
+          {/* Hospitals and Camps shelf */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Booking Confirmed Slip */}
+            {testBooking && (
+              <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-4 animate-in slide-in-from-top-5 duration-200">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircle size={20} />
+                  <h3 className="font-bold text-sm">Blood Test Appointment Scheduled!</h3>
+                </div>
+                <div className="p-4 bg-slate-950/45 rounded-xl border border-slate-800 text-xs space-y-2">
+                  <p><strong>Appointment Type:</strong> Blood Group Typing Test (Pre-donation)</p>
+                  <p><strong>Facility:</strong> {testBooking.center} ({testBooking.city})</p>
+                  <p><strong>Date & Time:</strong> {testBooking.date} at {testBooking.time}</p>
+                  <p className="text-slate-400 mt-1">Please show this screen or provide your registered name at the reception. The test is completely free.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Upcoming Camps and Near Facilities List */}
+            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <MapPin size={18} className="text-rose-500" />
+                Partner Medical Centers & Upcoming Camps
+              </h3>
+              
+              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                {/* Mock Camps */}
+                <div className="p-4 rounded-xl bg-rose-600/10 border border-rose-500/20 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[9px] uppercase tracking-wider animate-pulse">Active Camp</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Aug 10 - Aug 12</span>
+                  </div>
+                  <h4 className="font-bold text-slate-200 text-xs">Mega Voluntary Blood Typing & Donation Drive</h4>
+                  <p className="text-[10px] text-slate-500">Kakinada Red Cross Blood Center, Main Road, Ramanayyapeta</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-bold text-[9px] uppercase tracking-wider">Upcoming Camp</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Aug 24</span>
+                  </div>
+                  <h4 className="font-bold text-slate-200 text-xs">Arogya Voluntary Youth Camp</h4>
+                  <p className="text-[10px] text-slate-500">Bhanugudi Junction, Kakinada, AP 533003</p>
+                </div>
+
+                {/* Partner Hospitals */}
+                {filteredHospitals.map((hosp) => (
+                  <div key={hosp.name} className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <h4 className="font-bold text-slate-200 text-xs">{hosp.name}</h4>
+                      <p className="text-[10px] text-slate-500 mt-1">{hosp.city}</p>
+                    </div>
+                    <span className="px-2.5 py-1 bg-slate-950 border border-slate-850 rounded-lg text-[9px] font-bold text-rose-400">Partner Facility</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
 

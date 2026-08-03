@@ -277,23 +277,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       </button>
       {/* Brand Logo header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-4 flex flex-col items-center select-none">
-        <div 
+        <img 
+          src="/logo.png" 
+          alt="LIFE CARE Logo" 
+          className="h-14 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
           onClick={() => navigate("/")}
-          className="w-14 h-14 relative flex-shrink-0 cursor-pointer hover:scale-110 transition-transform duration-200" 
           style={{ filter: "drop-shadow(0px 2px 6px rgba(153, 27, 27, 0.4))" }}
-        >
-          <div 
-            className="w-full h-full"
-            style={{ 
-              borderRadius: "0% 100% 100% 100%", 
-              background: "radial-gradient(circle at 35% 35%, #ff4d4d 0%, #dc2626 40%, #991b1b 100%)",
-              boxShadow: "inset -2px -2px 6px rgba(0, 0, 0, 0.4), 2px 4px 6px rgba(153, 27, 27, 0.2)",
-              transform: "rotate(45deg)"
-            }}
-          >
-            <div className="absolute w-3.5 h-4 bg-white/70 rounded-full" style={{ top: "15%", left: "15%", transform: "rotate(-45deg)" }}></div>
-          </div>
-        </div>
+        />
         <h2 className="text-3xl font-black tracking-tight text-slate-100">
           {isRegister 
             ? "Create your account" 
@@ -320,6 +310,32 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="glass-panel py-8 px-6 shadow-2xl rounded-2xl border border-slate-800 space-y-6">
+          
+          {/* Top Tabs to Toggle Login / Register */}
+          <div className="flex border-b border-slate-800 pb-3">
+            <button
+              type="button"
+              onClick={() => toggleMode(false)}
+              className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+                !isRegister && !isForgotPassword && !isOtpLogin
+                  ? "text-rose-500 border-rose-500"
+                  : "text-slate-500 border-transparent hover:text-slate-400"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleMode(true)}
+              className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+                isRegister
+                  ? "text-rose-500 border-rose-500"
+                  : "text-slate-500 border-transparent hover:text-slate-400"
+              }`}
+            >
+              Register
+            </button>
+          </div>
           
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-xs font-semibold animate-shake">

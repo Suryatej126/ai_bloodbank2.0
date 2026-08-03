@@ -205,19 +205,13 @@ export const LandingPage: React.FC = () => {
       {/* Header */}
       <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
         <div className="flex items-center gap-3 select-none">
-          <div className="w-10 h-10 relative flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0px 2px 4px rgba(153, 27, 27, 0.3))" }}>
-            <div 
-              className="w-full h-full"
-              style={{ 
-                borderRadius: "0% 100% 100% 100%", 
-                background: "radial-gradient(circle at 35% 35%, #ff4d4d 0%, #dc2626 40%, #991b1b 100%)",
-                boxShadow: "inset -2px -2px 6px rgba(0, 0, 0, 0.4), 2px 4px 6px rgba(153, 27, 27, 0.2)",
-                transform: "rotate(45deg)"
-              }}
-            >
-              <div className="absolute w-2.5 h-3 bg-white/70 rounded-full" style={{ top: "15%", left: "15%", transform: "rotate(-45deg)" }}></div>
-            </div>
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="LIFE CARE Logo" 
+            className="h-10 w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
+            onClick={() => navigate("/")}
+            style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
+          />
           <div>
             <h1 className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-normal py-0.5">
               LIFE CARE
@@ -231,7 +225,7 @@ export const LandingPage: React.FC = () => {
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
           <button 
             onClick={() => setIsSosChoiceOpen(true)}
-            className="px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black bg-red-600 hover:bg-red-500 text-white border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_20px_rgba(220,38,38,0.7)] transition-all duration-300 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            className="px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black bg-red-600 hover:bg-red-500 text-white border border-red-500 transition-all duration-300 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider sos-pulse"
           >
             <AlertCircle size={14} />
             <span className="hidden sm:inline">SOS Emergency</span>
@@ -291,6 +285,13 @@ export const LandingPage: React.FC = () => {
             >
               <Droplet size={18} className="text-rose-500" />
               Request Blood
+            </button>
+            <button 
+              onClick={() => setIsSosChoiceOpen(true)}
+              className="flex items-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 hover:bg-red-500 text-white text-sm sm:text-base font-bold rounded-2xl transition-all cursor-pointer hover:scale-105 active:scale-95 duration-200 sos-pulse border border-red-500/20"
+            >
+              <AlertCircle size={18} className="animate-bounce" />
+              SOS EMERGENCY
             </button>
           </div>
 

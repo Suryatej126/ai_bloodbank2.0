@@ -283,29 +283,29 @@ export const PatientDashboard: React.FC = () => {
       {/* ================= DASHBOARD TAB ================= */}
       {currentTab === "dashboard" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <div className="grid grid-cols-3 gap-3 sm:gap-6">
+            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Your Active SOS</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">
+                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Active SOS</p>
+                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">
                   {requests.filter((r) => r.recipient_name === "Self").length}
                 </p>
               </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl"><AlertTriangle size={20} /></div>
+              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><AlertTriangle size={16} className="sm:w-5 sm:h-5" /></div>
             </div>
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Blood Banks Nearby</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">{KAKINADA_DONORS.filter(d => d.available).length}</p>
+                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Banks Nearby</p>
+                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">{KAKINADA_DONORS.filter(d => d.available).length}</p>
               </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl"><Database size={20} /></div>
+              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><Database size={16} className="sm:w-5 sm:h-5" /></div>
             </div>
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Nearest Bank</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">0.9 km</p>
+                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Nearest</p>
+                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">0.9 km</p>
               </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl"><Clock size={20} /></div>
+              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><Clock size={16} className="sm:w-5 sm:h-5" /></div>
             </div>
           </div>
 

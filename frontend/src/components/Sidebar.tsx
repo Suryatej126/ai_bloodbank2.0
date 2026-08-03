@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onClos
           { label: "My Profile", icon: User, path: "/donor" },
           { label: "Appointments", icon: Calendar, path: "/donor/appointments" },
           { label: "Eligibility Checker", icon: HeartHandshake, path: "/donor/eligibility" },
+          { label: "Blood Typing Test", icon: Activity, path: "/donor/bloodtest" },
           { label: "Requests", icon: AlertTriangle, path: "/donor/requests" },
         ];
       case "patient":

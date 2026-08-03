@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from "react-router-dom";
 import { api } from "./services/api";
 import { Sidebar } from "./components/Sidebar";
 import { Chatbot } from "./components/Chatbot";
-import { Menu } from "lucide-react";
+import { Menu, LayoutDashboard, Activity, AlertTriangle, LogOut } from "lucide-react";
 // Safe dynamic import loader wrapper to handle deployment updates/chunk load failures
 const safeLazy = (importFn: () => Promise<any>) => {
   return React.lazy(async () => {
@@ -87,6 +87,8 @@ export const App: React.FC = () => {
   // Dashboard Wrapper Component
   const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const location = useLocation();
+
     if (!token || !role) {
       return <Navigate to="/login" replace />;
     }
@@ -104,16 +106,18 @@ export const App: React.FC = () => {
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)} 
         />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`flex-1 flex flex-col min-w-0 ${role === "patient" ? "pb-16 md:pb-0" : ""}`}>
           {/* ===== TOP HEADER BAR ===== */}
           <header className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-6 py-3 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 shadow-sm">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 border border-slate-800 md:hidden cursor-pointer"
-              >
-                <Menu size={18} />
-              </button>
+              {role !== "patient" && (
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 border border-slate-800 md:hidden cursor-pointer"
+                >
+                  <Menu size={18} />
+                </button>
+              )}
               <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold hidden sm:inline">
                 LIFE CARE · AI Smart Blood Bank
               </span>
@@ -121,15 +125,27 @@ export const App: React.FC = () => {
                 LIFE CARE
               </span>
             </div>
-            {/* Logo — replace logo.png in /public to update */}
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-600 font-mono capitalize">{role} panel</span>
-              <img
-                src="/logo.png"
-                alt="LIFE CARE Logo"
-                className="h-4 w-auto object-contain"
-                style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
-              />
+            
+            {/* Top Right Actions */}
+            <div className="flex items-center gap-4">
+              {role === "patient" && (
+                <button
+                  onClick={handleLogout}
+                  className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold transition-all cursor-pointer animate-in fade-in duration-200"
+                >
+                  <LogOut size={13} />
+                  <span>Logout</span>
+                </button>
+              )}
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-slate-650 font-mono capitalize">{role} panel</span>
+                <img
+                  src="/logo.png"
+                  alt="LIFE CARE Logo"
+                  className="h-4 w-auto object-contain"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
+                />
+              </div>
             </div>
           </header>
 
@@ -137,6 +153,40 @@ export const App: React.FC = () => {
             {children}
           </main>
         </div>
+
+        {/* Bottom Tab Navigation Bar for Patients on Mobile */}
+        {role === "patient" && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 flex justify-around items-center py-2.5 px-4 shadow-xl">
+            <Link 
+              to="/patient" 
+              className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
+                location.pathname === "/patient" || location.pathname === "/patient/" ? "text-rose-500" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <LayoutDashboard size={18} />
+              Dashboard
+            </Link>
+            <Link 
+              to="/patient/search" 
+              className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
+                location.pathname === "/patient/search" ? "text-rose-500" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Activity size={18} />
+              Blood Search
+            </Link>
+            <Link 
+              to="/patient/requests" 
+              className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
+                location.pathname === "/patient/requests" ? "text-rose-500" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <AlertTriangle size={18} />
+              My Requests
+            </Link>
+          </div>
+        )}
+
         {/* Floating Chatbot assistant available everywhere */}
         <Chatbot />
       </div>
