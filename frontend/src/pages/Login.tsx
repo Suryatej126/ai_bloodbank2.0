@@ -266,6 +266,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setSuccessMessage("");
   };
 
+  const activeKey = isRegister 
+    ? 'register' 
+    : isForgotPassword 
+      ? 'forgot' 
+      : isOtpLogin 
+        ? 'otp' 
+        : 'login';
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white relative overflow-hidden">
       {/* Background decorative glowing blobs */}
@@ -283,9 +291,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <img 
           src="/logo.png" 
           alt="LIFE CARE Logo" 
-          className="h-14 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
+          className="h-28 w-auto object-contain cursor-pointer hover:scale-110 transition-transform duration-200" 
           onClick={() => navigate("/")}
-          style={{ filter: "drop-shadow(0px 2px 6px rgba(153, 27, 27, 0.4))" }}
+          style={{ filter: "drop-shadow(0px 2px 8px rgba(153, 27, 27, 0.5))" }}
         />
         <h2 className="text-3xl font-black tracking-tight text-slate-100">
           {isRegister 
@@ -312,7 +320,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 z-10">
-        <div className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden">
+        <div key={activeKey} className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden animate-card-flip">
           {/* Glowing border outline overlay */}
           <div className="absolute inset-0 border border-gradient-to-b from-white/10 to-transparent rounded-3xl pointer-events-none"></div>
 

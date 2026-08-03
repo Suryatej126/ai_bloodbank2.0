@@ -198,7 +198,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* Mobile-Only Overlays (YouTube Ad style skip button on bottom-right, floating mute icon on bottom-left) */}
-        <div className="sm:hidden absolute inset-x-0 bottom-14 px-4 flex items-center justify-between z-10 pointer-events-none">
+        <div className="sm:hidden absolute inset-x-0 bottom-28 px-4 flex items-center justify-between z-10 pointer-events-none">
           {/* Floating Glassy Mute button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
@@ -224,22 +224,24 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-rose-500 selection:text-white">
       {/* Header */}
       <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-        <div className="flex items-center gap-3 select-none">
-          <img 
-            src="/logo.png" 
-            alt="LIFE CARE Logo" 
-            className="h-[38px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
-            onClick={() => navigate("/")}
-            style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
-          />
-          <div className="flex flex-col justify-center">
-            <h1 className="font-extrabold text-[23px] text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
+        <div className="flex flex-col select-none">
+          {/* Row: Logo + Title centered together */}
+          <div className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="LIFE CARE Logo" 
+              className="h-9 w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
+              onClick={() => navigate("/")}
+              style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
+            />
+            <h1 className="font-extrabold text-[26px] text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none py-1">
               LIFE CARE
             </h1>
-            <p className="text-[9px] text-rose-500 uppercase tracking-widest font-bold mt-1.5 leading-none">
-              ai smart blood bank
-            </p>
           </div>
+          {/* Subtitle placed below, indented exactly past the logo width + gap */}
+          <p className="text-[9px] text-rose-500 uppercase tracking-widest font-black pl-[44px] leading-none">
+            ai smart blood bank
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">

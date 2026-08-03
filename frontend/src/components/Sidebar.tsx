@@ -81,21 +81,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onClos
       <div className="space-y-8">
         {/* Brand */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => { navigate("/"); if (onClose) onClose(); }}>
-            <img 
-              src="/logo.png" 
-              alt="LIFE CARE Logo" 
-              className="h-[36px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform"
-              style={{ filter: "drop-shadow(0 0 4px rgba(220,38,38,0.35))" }}
-            />
-            <div className="flex flex-col justify-center">
-              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
+          <div className="flex flex-col select-none cursor-pointer" onClick={() => { navigate("/"); if (onClose) onClose(); }}>
+            {/* Row: Logo + Title centered together */}
+            <div className="flex items-center gap-2">
+              <img 
+                src="/logo.png" 
+                alt="LIFE CARE Logo" 
+                className="h-8 w-auto object-contain hover:scale-105 transition-transform"
+                style={{ filter: "drop-shadow(0 0 4px rgba(220,38,38,0.35))" }}
+              />
+              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none py-1">
                 LIFE CARE
               </h1>
-              <p className="text-[9px] text-rose-500 uppercase tracking-widest font-bold mt-1.5 leading-none">
-                ai smart blood bank
-              </p>
             </div>
+            {/* Subtitle placed below, indented exactly past the logo width + gap */}
+            <p className="text-[9px] text-rose-500 uppercase tracking-widest font-black pl-[40px] leading-none">
+              ai smart blood bank
+            </p>
           </div>
           {onClose && (
             <button 
