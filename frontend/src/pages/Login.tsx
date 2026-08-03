@@ -267,7 +267,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white relative">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white relative overflow-hidden">
+      {/* Background decorative glowing blobs */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-rose-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-red-650/10 rounded-full blur-[120px] pointer-events-none"></div>
       {/* Back button */}
       <button 
         onClick={() => navigate("/")} 
@@ -308,18 +311,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="glass-panel py-8 px-6 shadow-2xl rounded-2xl border border-slate-800 space-y-6">
-          
-          {/* Top Tabs to Toggle Login / Register */}
-          <div className="flex border-b border-slate-800 pb-3">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 z-10">
+        <div className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden">
+          {/* Glowing border outline overlay */}
+          <div className="absolute inset-0 border border-gradient-to-b from-white/10 to-transparent rounded-3xl pointer-events-none"></div>
+
+          {/* Unified segment pill tabs for Login / Register */}
+          <div className="flex bg-white/[0.03] p-1 rounded-2xl border border-white/5 shadow-inner">
             <button
               type="button"
               onClick={() => toggleMode(false)}
-              className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+              className={`flex-1 text-center py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
                 !isRegister && !isForgotPassword && !isOtpLogin
-                  ? "text-rose-500 border-rose-500"
-                  : "text-slate-500 border-transparent hover:text-slate-400"
+                  ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30 font-extrabold"
+                  : "text-slate-450 hover:text-slate-200 hover:bg-white/[0.02]"
               }`}
             >
               Sign In
@@ -327,10 +332,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             <button
               type="button"
               onClick={() => toggleMode(true)}
-              className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+              className={`flex-1 text-center py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
                 isRegister
-                  ? "text-rose-500 border-rose-500"
-                  : "text-slate-500 border-transparent hover:text-slate-400"
+                  ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30 font-extrabold"
+                  : "text-slate-450 hover:text-slate-200 hover:bg-white/[0.02]"
               }`}
             >
               Register
@@ -358,7 +363,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Full Name
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <UserIcon size={16} />
                   </span>
                   <input
@@ -366,7 +371,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="John Doe"
                   />
                 </div>
@@ -378,7 +383,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Email Address
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Mail size={16} />
                   </span>
                   <input
@@ -386,7 +391,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="name@company.com"
                   />
                 </div>
@@ -398,7 +403,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Phone Number
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Phone size={16} />
                   </span>
                   <input
@@ -406,7 +411,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="+919999999901"
                   />
                 </div>
@@ -420,7 +425,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <select
                   value={registerRole}
                   onChange={(e) => setRegisterRole(e.target.value)}
-                  className="block w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 cursor-pointer"
+                  className="block w-full px-3.5 py-3 glass-input glass-select text-sm cursor-pointer focus:outline-none"
                 >
                   <option value="donor">Donor (Blood Donation)</option>
                   <option value="patient">Patient (Needs Blood)</option>
@@ -435,7 +440,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Lock size={16} />
                   </span>
                   <input
@@ -443,7 +448,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="••••••••"
                   />
                 </div>
@@ -455,7 +460,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Lock size={16} />
                   </span>
                   <input
@@ -463,7 +468,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="••••••••"
                   />
                 </div>
@@ -473,7 +478,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
               >
                 {loading ? "Creating Account..." : "Create Account"}
               </button>
@@ -500,7 +505,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     Email Address
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <Mail size={16} />
                     </span>
                     <input
@@ -508,7 +513,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                       placeholder="name@company.com"
                     />
                   </div>
@@ -517,7 +522,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                  className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {loading ? "Sending OTP..." : "Send Verification OTP"}
                 </button>
@@ -543,7 +548,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     OTP Verification Code
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <KeyRound size={16} />
                     </span>
                     <input
@@ -551,7 +556,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       required
                       value={forgotOtp}
                       onChange={(e) => setForgotOtp(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                       placeholder="123456"
                     />
                   </div>
@@ -562,7 +567,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     New Password
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <Lock size={16} />
                     </span>
                     <input
@@ -570,7 +575,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       required
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                       placeholder="••••••••"
                     />
                   </div>
@@ -581,7 +586,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     Confirm New Password
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <Lock size={16} />
                     </span>
                     <input
@@ -589,7 +594,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       required
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                       placeholder="••••••••"
                     />
                   </div>
@@ -598,7 +603,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                  className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {loading ? "Resetting Password..." : "Reset Password"}
                 </button>
@@ -653,7 +658,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     Email Address
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <Mail size={16} />
                     </span>
                     <input
@@ -661,7 +666,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                      className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                       placeholder="name@company.com"
                     />
                   </div>
@@ -670,7 +675,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                  className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {loading ? "Sending OTP..." : "Request Login OTP"}
                 </button>
@@ -695,7 +700,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     Enter Verification OTP
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                       <KeyRound size={16} />
                     </span>
                     <input
@@ -713,7 +718,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                  className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {loading ? "Verifying..." : "Verify & Sign In"}
                 </button>
@@ -768,7 +773,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   Email Address
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Mail size={16} />
                   </span>
                   <input
@@ -776,7 +781,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="name@company.com"
                   />
                 </div>
@@ -801,7 +806,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   </button>
                 </div>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <Lock size={16} />
                   </span>
                   <input
@@ -809,7 +814,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600"
+                    className="block w-full pl-10 pr-3 py-3 glass-input text-sm focus:outline-none"
                     placeholder="••••••••"
                   />
                 </div>
@@ -819,7 +824,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 shadow-rose-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white btn-premium-rose disabled:opacity-50 transition-all cursor-pointer"
               >
                 {loading ? "Verifying..." : "Sign In"}
               </button>
@@ -852,7 +857,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   2FA Verification Code (OTP)
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center glass-icon-wrapper">
                     <KeyRound size={16} />
                   </span>
                   <input
@@ -887,7 +892,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-emerald-600/20 disabled:opacity-50 transition-all cursor-pointer"
+                className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? "Checking..." : "Verify Code"}
               </button>

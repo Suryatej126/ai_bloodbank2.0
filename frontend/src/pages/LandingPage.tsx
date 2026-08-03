@@ -169,8 +169,8 @@ export const LandingPage: React.FC = () => {
           Your browser does not support the video tag.
         </video>
 
-        {/* Overlay controls inside the video container at the bottom */}
-        <div className="absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex flex-row gap-2.5 sm:gap-0 items-center justify-center sm:justify-between z-10">
+        {/* Desktop Overlay controls inside the video container at the bottom */}
+        <div className="hidden sm:flex absolute inset-x-0 bottom-6 sm:bottom-10 px-4 sm:px-8 md:px-16 flex-row gap-2.5 sm:gap-0 items-center justify-between z-10">
           {/* Glassy Mute/Unmute button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
@@ -196,6 +196,26 @@ export const LandingPage: React.FC = () => {
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
+
+        {/* Mobile-Only Overlays (YouTube Ad style skip button on bottom-right, floating mute icon on bottom-left) */}
+        <div className="sm:hidden absolute inset-x-0 bottom-14 px-4 flex items-center justify-between z-10 pointer-events-none">
+          {/* Floating Glassy Mute button */}
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-slate-200 shadow-2xl active:scale-95 transition-all cursor-pointer"
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+
+          {/* YouTube Ad style skip button */}
+          <button
+            onClick={handleSkipIntro}
+            className="pointer-events-auto absolute right-0 flex items-center gap-1 bg-black/65 backdrop-blur-md border border-r-0 border-white/10 pl-4 pr-5 py-2.5 rounded-l-md text-xs font-bold text-slate-100 hover:text-white shadow-2xl active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <span>Skip Onboarding</span>
+            <ChevronRight size={14} className="text-slate-400" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -208,7 +228,7 @@ export const LandingPage: React.FC = () => {
           <img 
             src="/logo.png" 
             alt="LIFE CARE Logo" 
-            className="h-10 w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
+            className="h-[52px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
             onClick={() => navigate("/")}
             style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
           />
