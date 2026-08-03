@@ -11,7 +11,12 @@ export const LandingPage: React.FC = () => {
   const [showIntro, setShowIntro] = useState(!hasPlayedSessionIntro);
   const [isMuted, setIsMuted] = useState(true);
   const [fadeClass, setFadeClass] = useState("opacity-100");
-  const [videoSrc, setVideoSrc] = useState("/intro-desktop.mp4");
+  const [videoSrc, setVideoSrc] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 640 ? "/intro-mobile.mp4" : "/intro-desktop.mp4";
+    }
+    return "/intro-desktop.mp4";
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -21,7 +26,6 @@ export const LandingPage: React.FC = () => {
         setVideoSrc("/intro-desktop.mp4");
       }
     };
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -152,10 +156,10 @@ export const LandingPage: React.FC = () => {
   if (showIntro) {
     return (
       <div className={`fixed inset-0 w-screen h-screen h-[100dvh] z-50 bg-[#c8c2b5] sm:bg-slate-950 select-none overflow-hidden ${fadeClass}`}>
-        {/* Full-Screen Video (contain on mobile to prevent logo/subtitle crop, cover on desktop) */}
+        {/* Full-Screen Video (cover to fill screen on both mobile and desktop) */}
         <video
           key={videoSrc}
-          className="absolute inset-0 w-full h-full object-contain sm:object-cover sm:object-center"
+          className="absolute inset-0 w-full h-full object-cover"
           autoPlay
           muted={isMuted}
           playsInline
