@@ -266,13 +266,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setSuccessMessage("");
   };
 
-  const activeKey = isRegister 
+  const [visibleMode, setVisibleMode] = useState("login");
+
+  const targetMode = isRegister 
     ? 'register' 
     : isForgotPassword 
       ? 'forgot' 
       : isOtpLogin 
         ? 'otp' 
         : 'login';
+
+  const isFlipped = targetMode !== 'login';
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisibleMode(targetMode);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [targetMode]);
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-rose-500 selection:text-white relative overflow-hidden">
@@ -320,9 +331,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 z-10">
-        <div key={activeKey} className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden animate-card-360">
+        <div className={`relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 overflow-hidden flip-card-container ${isFlipped ? 'flip-card-flipped' : ''}`}>
           {/* Glowing border outline overlay */}
           <div className="absolute inset-0 border border-gradient-to-b from-white/10 to-transparent rounded-3xl pointer-events-none"></div>
+
+          {/* Unified Content Wrapper rotating back to unmirror text */}
+          <div className={`space-y-6 ${isFlipped ? 'flip-card-back' : ''}`}>
 
           {/* Unified segment pill tabs for Login / Register */}
           <div className="flex bg-white/[0.03] p-1 rounded-2xl border border-white/5 shadow-inner">
@@ -362,7 +376,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          {isRegister ? (
+          {visibleMode === "register" ? (
             /* ================= REGISTER FORM ================= */
             <form className="space-y-5" onSubmit={handleRegisterSubmit}>
               {/* Full Name */}
@@ -504,7 +518,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </p>
               </div>
             </form>
-          ) : isForgotPassword ? (
+          ) : visibleMode === "forgot" ? (
             /* ================= FORGOT PASSWORD FORM ================= */
             forgotStep === 1 ? (
               <form className="space-y-5" onSubmit={handleForgotPasswordSubmit}>
@@ -631,7 +645,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
               </form>
             )
-          ) : isOtpLogin ? (
+          ) : visibleMode === "otp" ? (
             /* ================= OTP LOGIN FORM ================= */
             otpLoginStep === 1 ? (
               <form className="space-y-5" onSubmit={handleSendOtpLoginSubmit}>
@@ -972,6 +986,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
