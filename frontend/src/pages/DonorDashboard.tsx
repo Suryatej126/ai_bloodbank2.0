@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../services/api";
 import { 
   User, 
@@ -15,63 +16,15 @@ import {
   MapPin,
   Activity,
   Check,
-  Clock
+  Clock,
+  Phone,
+  X,
+  Map,
+  Trophy,
+  ActivitySquare
 } from "lucide-react";
 
-const SkeletonProfile: React.FC = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 animate-pulse">
-      <div className="h-6 bg-slate-900 rounded w-1/4 mb-4" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="space-y-2">
-            <div className="h-3 bg-slate-900 rounded w-1/3" />
-            <div className="h-10 bg-slate-900 rounded w-full" />
-          </div>
-        ))}
-      </div>
-    </div>
-    <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 animate-pulse">
-      <div className="h-6 bg-slate-900 rounded w-1/2 mb-4" />
-      <div className="space-y-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-16 bg-slate-900 rounded w-full" />
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-const SkeletonAppointments: React.FC = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 animate-pulse">
-      <div className="h-6 bg-slate-900 rounded w-1/2 mb-4" />
-      {[1, 2, 3].map(i => (
-        <div key={i} className="space-y-2">
-          <div className="h-3 bg-slate-900 rounded w-1/3" />
-          <div className="h-10 bg-slate-900 rounded w-full" />
-        </div>
-      ))}
-    </div>
-    <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 animate-pulse">
-      <div className="h-6 bg-slate-900 rounded w-1/3 mb-4" />
-      {[1, 2].map(i => (
-        <div key={i} className="h-20 bg-slate-900 rounded w-full" />
-      ))}
-    </div>
-  </div>
-);
-
-const SkeletonRequests: React.FC = () => (
-  <div className="space-y-4">
-    <div className="h-12 bg-slate-900 rounded w-full animate-pulse" />
-    {[1, 2, 3].map(i => (
-      <div key={i} className="h-32 bg-slate-900 rounded w-full animate-pulse border border-slate-800/40" />
-    ))}
-  </div>
-);
-
-// Leaflet CSS and JS CDN loader helper
+// Leaflet CDN dynamic loader helper
 const loadLeaflet = (): Promise<any> => {
   return new Promise((resolve, reject) => {
     if ((window as any).L) {
@@ -79,7 +32,6 @@ const loadLeaflet = (): Promise<any> => {
       return;
     }
     
-    // Inject Leaflet CSS
     const cssId = "leaflet-cdn-css";
     if (!document.getElementById(cssId)) {
       const link = document.createElement("link");
@@ -89,7 +41,6 @@ const loadLeaflet = (): Promise<any> => {
       document.head.appendChild(link);
     }
 
-    // Inject Leaflet JS script
     const scriptId = "leaflet-cdn-js";
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -127,7 +78,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const initialLat = parseFloat(lat) || 16.9823;
-  const initialLng = parseFloat(lng) || 82.2318;
+  const initialLng = parseFloat(lng) || 82.2475;
 
   useEffect(() => {
     let active = true;
@@ -143,10 +94,9 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
       mapRef.current = mapInstance;
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; OpenStreetMap'
       }).addTo(mapInstance);
 
-      // Custom red glowing pulse marker icon
       const customIcon = L.divIcon({
         className: "custom-leaflet-marker",
         html: `<div class="relative w-8 h-8 flex items-center justify-center">
@@ -165,14 +115,12 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
       }).addTo(mapInstance);
       markerRef.current = marker;
 
-      // Handle map clicks
       mapInstance.on("click", (e: any) => {
         const { lat: clickLat, lng: clickLng } = e.latlng;
         marker.setLatLng([clickLat, clickLng]);
         triggerChange(clickLat, clickLng);
       });
 
-      // Handle marker drag
       marker.on("dragend", () => {
         const position = marker.getLatLng();
         triggerChange(position.lat, position.lng);
@@ -213,7 +161,6 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
     };
   }, []);
 
-  // Update marker position from parent changes (like Geolocation API)
   useEffect(() => {
     if (mapRef.current && markerRef.current && lat && lng) {
       const parsedLat = parseFloat(lat);
@@ -257,7 +204,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
         },
         (error) => {
           console.error("Geolocation error", error);
-          alert("Could not access your location. Please select it manually on the map.");
+          alert("Could not access location. Please select it manually.");
         }
       );
     } else {
@@ -272,19 +219,12 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
         <button
           onClick={handleLocateMe}
           type="button"
-          className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-white/5 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
         >
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
           Locate Me
         </button>
       </div>
-      <div 
-        className="w-full rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden relative"
-        style={{ height: "220px" }}
-      >
+      <div className="w-full rounded-xl border border-white/5 bg-slate-950 overflow-hidden relative h-[200px]">
         {loadingMap && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-[1000] text-slate-500 text-xs">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-rose-500 mr-2"></div>
@@ -292,15 +232,12 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
           </div>
         )}
         {errorMsg && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-[1000] text-rose-400 text-xs p-4 text-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-[1000] text-rose-455 text-xs p-4 text-center">
             {errorMsg}
           </div>
         )}
-        <div ref={mapContainerRef} className="w-full h-full z-[1]" />
+        <div ref={mapContainerRef} className="w-full h-full z-[1]" style={{ filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }} />
       </div>
-      <p className="text-[9px] text-slate-500 leading-normal">
-        📍 Drag the marker or click on the map to pinpoint your location. Address fields will auto-fill if resolved.
-      </p>
     </div>
   );
 };
@@ -324,23 +261,8 @@ export const DonorDashboard: React.FC = () => {
   const [appointmentTime, setAppointmentTime] = useState("10:00");
   const [scheduledAppts, setScheduledAppts] = useState<any[]>([]);
 
-  // Blood test booking form states
+  // Blood test booking states
   const [testBooking, setTestBooking] = useState<any | null>(null);
-
-  const handleBookTest = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTestBooking({
-      id: Date.now(),
-      center: selectedCenter,
-      city: selectedCity,
-      date: appointmentDate,
-      time: appointmentTime
-    });
-    setToast({
-      message: "🔬 Blood Typing Test scheduled successfully!",
-      type: "success"
-    });
-  };
 
   // City and hospital dynamic selection
   const [facilities, setFacilities] = useState<any[]>([]);
@@ -369,7 +291,7 @@ export const DonorDashboard: React.FC = () => {
   const [updateStatus, setUpdateStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  // Eligibility Form States
+  // Eligibility Checker
   const [age, setAge] = useState("25");
   const [weight, setWeight] = useState("68");
   const [hemoglobin, setHemoglobin] = useState("14.5");
@@ -377,12 +299,10 @@ export const DonorDashboard: React.FC = () => {
   const [conditions, setConditions] = useState(false);
   const [travel, setTravel] = useState(false);
   const [vaccine, setVaccine] = useState(false);
-  
-  // Eligibility Result
   const [eligResult, setEligResult] = useState<any | null>(null);
   const [checking, setChecking] = useState(false);
 
-  // Digital Certificate popup
+  // Digital Certificate Popup
   const [activeCert, setActiveCert] = useState<any | null>(null);
 
   const loadDonorData = async () => {
@@ -392,7 +312,6 @@ export const DonorDashboard: React.FC = () => {
       setCurrentUser(user);
       setProfile(user.profile);
       
-      // Initialize edit profile form states
       setProfileName(user.full_name || "");
       setProfileEmail(user.email || "");
       setProfilePhone(user.phone || "");
@@ -434,16 +353,14 @@ export const DonorDashboard: React.FC = () => {
         }
       }
       
-      // Mock Badges
       setBadges([
         { id: 1, title: "First Gift", description: "Awarded for completing your first life-saving blood donation.", unlocked: true },
         { id: 2, title: "Bronze Hero", description: "Awarded for completing 3 blood donations.", unlocked: false },
         { id: 3, title: "Silver LifeSaver", description: "Awarded for completing 5 blood donations.", unlocked: false }
       ]);
 
-      // Seed scheduled appts
       setScheduledAppts([
-        { id: 401, center: "Red Cross Blood Bank", city: "New Delhi", date: new Date(Date.now() + 86400000).toLocaleDateString(), time: "10:30 AM" }
+        { id: 401, center: "Red Cross Blood Bank", city: "Kakinada", date: new Date(Date.now() + 86400000).toLocaleDateString(), time: "10:30" }
       ]);
     } catch (e) {
       console.error(e);
@@ -518,7 +435,25 @@ export const DonorDashboard: React.FC = () => {
       time: appointmentTime
     };
     setScheduledAppts(prev => [newAppt, ...prev]);
-    alert(`Donation slot reserved successfully at ${selectedCenter}, ${selectedCity}! Details sent to your email.`);
+    setToast({
+      message: `Donation slot reserved successfully at ${selectedCenter}, ${selectedCity}!`,
+      type: "success"
+    });
+  };
+
+  const handleBookTest = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestBooking({
+      id: Date.now(),
+      center: selectedCenter,
+      city: selectedCity,
+      date: appointmentDate,
+      time: appointmentTime
+    });
+    setToast({
+      message: "🔬 Blood Typing Test scheduled successfully!",
+      type: "success"
+    });
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -561,20 +496,6 @@ export const DonorDashboard: React.FC = () => {
       return;
     }
 
-    const latNum = parseFloat(profileLat);
-    if (profileLat && (isNaN(latNum) || latNum < -90 || latNum > 90)) {
-      setUpdateStatus({ success: false, message: "Please enter a valid latitude (-90 to 90)." });
-      setUpdating(false);
-      return;
-    }
-
-    const lngNum = parseFloat(profileLng);
-    if (profileLng && (isNaN(lngNum) || lngNum < -180 || lngNum > 180)) {
-      setUpdateStatus({ success: false, message: "Please enter a valid longitude (-180 to 180)." });
-      setUpdating(false);
-      return;
-    }
-
     try {
       const userPayload = {
         full_name: profileName,
@@ -602,7 +523,6 @@ export const DonorDashboard: React.FC = () => {
       setProfile(updatedUser.profile);
       setUpdateStatus({ success: true, message: "Profile details updated successfully!" });
       
-      // Reload values in backend
       const userRes = await api.getCurrentUser();
       setCurrentUser(userRes);
       setProfile(userRes.profile);
@@ -619,157 +539,201 @@ export const DonorDashboard: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex-1 p-8 flex items-center justify-center bg-[#050814]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Syncing Donor Terminal...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-screen selection:bg-rose-500 selection:text-white bg-slate-950">
+    <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto max-h-[calc(100vh-4rem)] bg-[#050814] selection:bg-rose-500 selection:text-white">
+      
+      {/* Toast Alert banner */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 right-4 z-50 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-450 text-xs font-bold shadow-2xl flex items-center gap-2"
+          >
+            <CheckCircle size={16} className="text-emerald-400" />
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Digital Certificate Modal */}
+      <AnimatePresence>
+        {activeCert && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setActiveCert(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white text-slate-900 rounded-3xl w-full max-w-xl p-8 relative shadow-2xl border border-rose-200 text-center space-y-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button onClick={() => setActiveCert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer">
+                <X size={20} />
+              </button>
+
+              <div className="flex flex-col items-center">
+                <img src="/logo.png" alt="Logo" className="h-12 w-auto mb-2" style={{ filter: "drop-shadow(0 0 4px rgba(220,38,38,0.35))" }} />
+                <span className="text-[10px] text-rose-600 font-black tracking-widest uppercase">Certificate of Excellence</span>
+              </div>
+
+              <div className="border-t border-b border-slate-100 py-6 space-y-4">
+                <p className="text-xs text-slate-500 italic">This official digital document recognizes that</p>
+                <h3 className="text-xl font-extrabold tracking-tight text-slate-900 capitalize">{currentUser?.full_name}</h3>
+                <p className="text-xs text-slate-650 max-w-sm mx-auto leading-relaxed">
+                  has selflessly donated <strong className="text-rose-600">1.0 Unit</strong> of compatible blood group <strong className="text-rose-600">{profile?.blood_group || "O+"}</strong> to support life-saving operations at matching depots.
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center text-[10px] text-slate-400">
+                <div className="text-left">
+                  <p>Certificate ID: <strong className="font-mono text-slate-800">#DON-{activeCert.id}</strong></p>
+                  <p className="mt-0.5">Date: {new Date(activeCert.donation_date).toLocaleDateString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-rose-600 uppercase">Life Care AI</p>
+                  <p className="text-[8px] mt-0.5 text-slate-500">Official System Seal</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => window.print()}
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold transition-all hover:bg-slate-800"
+              >
+                Print Document
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Title */}
-      <div>
-        <h2 className="text-3xl font-extrabold tracking-tight capitalize">
-          {currentTab === "profile" ? "Donor Hub" : `${currentTab} Console`}
+      <div className="border-b border-white/5 pb-5">
+        <h2 className="text-2xl font-black text-slate-100 tracking-tight uppercase">
+          {currentTab === "profile" ? "Donor Profile Hub" : currentTab === "appointments" ? "Reservation Hub" : currentTab === "eligibility" ? "Eligibility Terminal" : currentTab === "bloodtest" ? "Blood Typing diagnostics" : "Urgent Requests"}
         </h2>
-        <p className="text-sm text-slate-400 mt-1">
-          {currentTab === "profile" 
-            ? "Monitor your eligibility status, check achievements, and retrieve donation certificates."
-            : `Donor console interface for scheduled ${currentTab}.`}
+        <p className="text-xs text-slate-450 mt-1">
+          {currentTab === "profile"
+            ? "Inspect your badges, update location variables, and view certificates."
+            : currentTab === "appointments"
+            ? "Reserve blood donation slots at near hospitals or mobile campaign camps."
+            : currentTab === "eligibility"
+            ? "Audit clinical parameters to evaluate your eligibility."
+            : currentTab === "bloodtest"
+            ? "Reserve a typing test appointment or inspect active camps."
+            : "Monitor pending compatible blood requests in your geocoded area."}
         </p>
       </div>
 
-      {/* ================= PROFILE TAB ================= */}
-      {currentTab === "profile" && (
-        loading ? <SkeletonProfile /> : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
-            {/* My Profile Details View or Edit Form */}
+      {/* ================= MY PROFILE TAB ================= */}
+      <AnimatePresence mode="wait">
+        {currentTab === "profile" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Left Card: Profile overview / edit form */}
             {!isEditing ? (
-              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 lg:col-span-2 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-600 to-rose-400" />
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800/80">
+              <div className="lg:col-span-2 bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-6 relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-rose-600 to-rose-450" />
+                
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-rose-600/10 border border-rose-500/30 flex items-center justify-center text-rose-500 font-extrabold text-lg shadow-inner">
-                      {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : <User size={20} />}
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600/10 to-rose-600/20 border border-rose-500/25 flex items-center justify-center text-rose-500 font-extrabold text-lg uppercase flex-shrink-0">
+                      {currentUser?.full_name ? currentUser.full_name.charAt(0) : "D"}
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
-                        {currentUser?.full_name || "Blood Donor"}
-                        {profile?.availability_status === "available" ? (
-                          <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Available
-                          </span>
-                        ) : (
-                          <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            Unavailable
-                          </span>
-                        )}
+                      <h3 className="font-extrabold text-slate-100 text-sm flex items-center gap-2">
+                        {currentUser?.full_name || "Active Donor"}
+                        <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                          profile?.availability_status === "available" ? "bg-emerald-500/10 text-emerald-450 border border-emerald-500/20" : "bg-slate-800 text-slate-400"
+                        }`}>
+                          {profile?.availability_status === "available" ? "Active Pool" : "On Hold"}
+                        </span>
                       </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        Donor ID #{currentUser?.id || 1} • {currentUser?.email}
-                      </p>
+                      <p className="text-[10px] text-slate-500 mt-1">ID #{currentUser?.id} • {currentUser?.email}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-rose-600/20"
+                    className="px-4 py-2 bg-gradient-to-tr from-red-650 to-rose-600 hover:from-red-550 hover:to-rose-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-rose-600/15"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
                     Edit Profile
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                  <div className="space-y-3.5">
-                    <h4 className="text-rose-500 font-bold uppercase tracking-wider text-[10px] pb-1 border-b border-slate-950">Health & Blood Profile</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest pb-1 border-b border-white/5">Biometrics Data</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Blood Group</span>
-                        <span className="text-sm font-black text-rose-450 mt-1 block">{profile?.blood_group || "O+"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Blood Group</span>
+                        <span className="text-base font-black text-rose-455 mt-1 block">{profile?.blood_group || "O+"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Birth Date</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Birth Date</span>
+                        <span className="text-xs font-semibold text-slate-200 mt-1 block">
                           {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : "Not set"}
                         </span>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Weight</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block">{profile?.weight ? `${profile.weight} kg` : "Not set"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Weight</span>
+                        <span className="text-xs font-semibold text-slate-200 mt-1 block">{profile?.weight ? `${profile.weight} kg` : "Not set"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Hemoglobin</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block">{profile?.hemoglobin ? `${profile.hemoglobin} g/dL` : "Not set"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Hemoglobin</span>
+                        <span className="text-xs font-semibold text-slate-200 mt-1 block">{profile?.hemoglobin ? `${profile.hemoglobin} g/dL` : "Not set"}</span>
                       </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Phone Number</span>
-                      <span className="text-sm font-semibold text-slate-200 mt-1 block">{currentUser?.phone || "Not set"}</span>
                     </div>
                   </div>
 
-                  <div className="space-y-3.5">
-                    <h4 className="text-rose-500 font-bold uppercase tracking-wider text-[10px] pb-1 border-b border-slate-950">Residential Address</h4>
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest pb-1 border-b border-white/5">Address Coordinates</h4>
                     <div>
-                      <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Street Address</span>
-                      <span className="text-sm font-semibold text-slate-200 mt-1 block leading-relaxed">{profile?.address || "Not set"}</span>
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Street Address</span>
+                      <p className="text-xs font-semibold text-slate-200 mt-1 truncate">{profile?.address || "Not set"}</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">City</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.city || "Not set"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">City</span>
+                        <span className="text-xs font-semibold text-slate-200 mt-1 block truncate">{profile?.city || "Not set"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">District</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.district || "Not set"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">State</span>
+                        <span className="text-xs font-semibold text-slate-200 mt-1 block truncate">{profile?.state || "Not set"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">State</span>
-                        <span className="text-sm font-semibold text-slate-200 mt-1 block truncate">{profile?.state || "Not set"}</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Lat/Lng</span>
+                        <span className="text-[10px] font-mono text-slate-350 mt-1 block truncate">Geocoded</span>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Latitude</span>
-                        <span className="text-xs font-mono text-slate-300 mt-1 block">{profile?.latitude || "Not set"}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Longitude</span>
-                        <span className="text-xs font-mono text-slate-300 mt-1 block">{profile?.longitude || "Not set"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2.5">
-                  <h5 className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Activity size={12} className="text-rose-500" />
-                    Clinical Declarations
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[10px]">
-                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
-                      <span className="text-slate-500 block text-[9px]">Medical Conditions</span>
-                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.health_conditions || "None declared"}</span>
-                    </div>
-                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
-                      <span className="text-slate-550 block text-[9px]">Exclusions / Vaccines</span>
-                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.vaccination_status || "None declared"}</span>
-                    </div>
-                    <div className="p-2 rounded bg-slate-950/40 border border-slate-900/50">
-                      <span className="text-slate-550 block text-[9px]">Travel Exposure Risk</span>
-                      <span className="font-semibold text-slate-300 mt-0.5 block truncate">{profile?.travel_history || "None declared"}</span>
                     </div>
                   </div>
                 </div>
 
                 {profile?.latitude && profile?.longitude && (
-                  <div className="space-y-1.5">
-                    <span className="text-slate-500 font-bold text-[9px] uppercase tracking-wider block">Pinned Location Map</span>
-                    <div className="w-full h-32 rounded-xl border border-slate-800 overflow-hidden">
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Home Marker Location</span>
+                    <div className="w-full h-36 rounded-2xl border border-white/5 overflow-hidden">
                       <iframe
                         title="profile-location-overview"
                         width="100%"
                         height="100%"
-                        style={{ border: 0 }}
+                        style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }}
                         src={`https://www.openstreetmap.org/export/embed.html?bbox=${(parseFloat(profile.longitude) - 0.015).toFixed(4)},${(parseFloat(profile.latitude) - 0.01).toFixed(4)},${(parseFloat(profile.longitude) + 0.015).toFixed(4)},${(parseFloat(profile.latitude) + 0.01).toFixed(4)}&layer=mapnik&marker=${profile.latitude},${profile.longitude}`}
                         allowFullScreen
                       />
@@ -778,75 +742,66 @@ export const DonorDashboard: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 lg:col-span-2">
-                <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
-                  <User size={18} />
-                  Update Donor Profile Details
-                </h3>
-                
+              <div className="lg:col-span-2 bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Update Profile Details</h3>
                 {updateStatus && (
-                  <div className={`p-4 rounded-xl border text-xs flex items-center gap-2 ${
-                    updateStatus.success 
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                      : "bg-red-500/10 border-red-500/20 text-red-400"
-                  }`}>
-                    {updateStatus.success ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                    <span>{updateStatus.message}</span>
+                  <div className={`p-4 rounded-2xl border text-xs ${updateStatus.success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-450" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                    {updateStatus.message}
                   </div>
                 )}
-                
+
                 <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Full Name</label>
                       <input
                         type="text"
                         required
                         value={profileName}
                         onChange={(e) => setProfileName(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-rose-500/50"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
                       <input
                         type="email"
                         required
                         value={profileEmail}
                         onChange={(e) => setProfileEmail(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-rose-500/50"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Phone</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Phone</label>
                       <input
                         type="text"
                         value={profilePhone}
                         onChange={(e) => setProfilePhone(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Blood Group</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Blood Group</label>
                       <select
                         value={profileBloodGroup}
                         onChange={(e) => setProfileBloodGroup(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none"
                       >
                         {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
                           <option key={bg} value={bg}>{bg}</option>
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Availability</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Availability</label>
                       <select
                         value={profileAvailability}
                         onChange={(e) => setProfileAvailability(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none"
                       >
                         <option value="available">Available</option>
                         <option value="unavailable">Unavailable</option>
@@ -854,102 +809,60 @@ export const DonorDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Date of Birth</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Date of Birth</label>
                       <input
                         type="date"
                         value={profileDob}
                         onChange={(e) => setProfileDob(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Weight (kg)</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Weight (kg)</label>
                       <input
                         type="number"
                         step="0.1"
                         value={profileWeight}
                         onChange={(e) => setProfileWeight(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Hemoglobin (g/dL)</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Hemoglobin (g/dL)</label>
                       <input
                         type="number"
                         step="0.1"
                         value={profileHemoglobin}
                         onChange={(e) => setProfileHemoglobin(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-1 md:col-span-2">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Street Address</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Street Address</label>
                       <input
                         type="text"
                         value={profileAddress}
                         onChange={(e) => setProfileAddress(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">City</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">City</label>
                       <input
                         type="text"
                         value={profileCity}
                         onChange={(e) => setProfileCity(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">District</label>
-                      <input
-                        type="text"
-                        value={profileDistrict}
-                        onChange={(e) => setProfileDistrict(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">State</label>
-                      <input
-                        type="text"
-                        value={profileState}
-                        onChange={(e) => setProfileState(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Latitude</label>
-                      <input
-                        type="text"
-                        value={profileLat}
-                        readOnly
-                        placeholder="Pin on map"
-                        className="block w-full px-3 py-2 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-400 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Longitude</label>
-                      <input
-                        type="text"
-                        value={profileLng}
-                        readOnly
-                        placeholder="Pin on map"
-                        className="block w-full px-3 py-2 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-400 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Interactive Map Picker Container */}
-                  <div className="p-3 bg-slate-950/30 border border-slate-900 rounded-xl">
+                  <div className="p-3 bg-slate-950 rounded-2xl">
                     <MapPicker
                       lat={profileLat}
                       lng={profileLng}
@@ -966,665 +879,453 @@ export const DonorDashboard: React.FC = () => {
                     />
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-slate-900">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Health Conditions</label>
-                      <input
-                        type="text"
-                        value={profileHealthConditions}
-                        onChange={(e) => setProfileHealthConditions(e.target.value)}
-                        placeholder="E.g., none, hypertension, diabetes"
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Travel History Risk</label>
-                      <input
-                        type="text"
-                        value={profileTravelHistory}
-                        onChange={(e) => setProfileTravelHistory(e.target.value)}
-                        placeholder="E.g., none, malaria-risk zones recently"
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-400 uppercase tracking-wider">Recent Vaccine Status</label>
-                      <input
-                        type="text"
-                        value={profileVaccineStatus}
-                        onChange={(e) => setProfileVaccineStatus(e.target.value)}
-                        placeholder="E.g., none, covid vaccine 5 days ago"
-                        className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                      />
-                    </div>
-                  </div>
-
                   <div className="flex gap-4 pt-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        setProfileName(currentUser?.full_name || "");
-                        setProfileEmail(currentUser?.email || "");
-                        setProfilePhone(currentUser?.phone || "");
-                        if (profile) {
-                          setProfileBloodGroup(profile.blood_group || "O+");
-                          setProfileDob(profile.date_of_birth ? new Date(profile.date_of_birth).toISOString().split("T")[0] : "");
-                          setProfileWeight(profile.weight ? profile.weight.toString() : "");
-                          setProfileHemoglobin(profile.hemoglobin ? profile.hemoglobin.toString() : "");
-                          setProfileCity(profile.city || "");
-                          setProfileDistrict(profile.district || "");
-                          setProfileState(profile.state || "");
-                          setProfileAddress(profile.address || "");
-                          setProfileLat(profile.latitude ? profile.latitude.toString() : "");
-                          setProfileLng(profile.longitude ? profile.longitude.toString() : "");
-                          setProfileHealthConditions(profile.health_conditions || "");
-                          setProfileTravelHistory(profile.travel_history || "");
-                          setProfileVaccineStatus(profile.vaccination_status || "");
-                          setProfileAvailability(profile.availability_status || "available");
-                        }
-                        setIsEditing(false);
-                        setUpdateStatus(null);
-                      }}
-                      className="w-1/3 py-3 px-4 rounded-xl text-sm font-bold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-850 transition-all cursor-pointer text-center"
+                      onClick={() => setIsEditing(false)}
+                      className="w-1/3 py-3 bg-slate-900 border border-white/5 text-slate-450 font-bold rounded-xl"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={updating}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-rose-600/20"
+                      className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/25"
                     >
-                      <Save size={14} />
-                      {updating ? "Saving Changes..." : "Save Profile Details"}
+                      Save Profile
                     </button>
                   </div>
                 </form>
               </div>
             )}
 
-            {/* Certificates & Badges Side Shelf */}
-            <div className="space-y-8 lg:col-span-1">
-              {/* Certificates Drawer */}
-              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <FileCheck2 size={18} className="text-rose-500" />
-                  Digital Donation Certificates
+            {/* Right Shelf: Badges and Certificates */}
+            <div className="space-y-6 lg:col-span-1">
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 flex items-center gap-1.5">
+                  <FileCheck2 size={16} className="text-rose-550" />
+                  Certificates log
                 </h3>
-                
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {donations.map((don) => (
-                    <div key={don.id} className="flex justify-between items-center p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <div className="min-w-0 flex-1 mr-2">
-                        <h4 className="font-bold text-[10px] text-slate-200 truncate">1.0 Unit Donation - ID #{don.id}</h4>
-                        <p className="text-[9px] text-slate-500 mt-0.5">
-                          Date: {new Date(don.donation_date).toLocaleDateString()}
-                        </p>
+                    <div key={don.id} className="p-3 rounded-2xl bg-white/[0.01] border border-white/5 flex justify-between items-center text-xs">
+                      <div>
+                        <p className="font-bold text-slate-200">1.0 Unit • #{don.id}</p>
+                        <p className="text-[9px] text-slate-500 mt-1">{new Date(don.donation_date).toLocaleDateString()}</p>
                       </div>
                       <button
                         onClick={() => setActiveCert(don)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[9px] font-bold rounded-lg transition-all cursor-pointer flex-shrink-0"
+                        className="px-2.5 py-1 bg-rose-600/10 text-rose-455 border border-rose-500/20 text-[10px] font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
                       >
-                        <Download size={10} />
-                        View
+                        Print
                       </button>
                     </div>
                   ))}
-                  
                   {donations.length === 0 && (
-                    <p className="text-[10px] text-slate-500 text-center py-4">No completed donation certificates available.</p>
+                    <p className="text-[10px] text-slate-550 text-center py-4">No donation logs found.</p>
                   )}
                 </div>
               </div>
 
-              {/* Achievements shelf */}
-              <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <Award size={18} className="text-rose-500" />
-                  Achievement Badges
+              {/* Achievements Grid */}
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-355 flex items-center gap-1.5">
+                  <Trophy size={16} className="text-rose-550" />
+                  Milestones
                 </h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-3">
                   {badges.map((b) => (
-                    <div key={b.id} className={`p-4 rounded-xl border flex flex-col items-center text-center space-y-2 transition-all duration-300 ${
-                      b.unlocked 
-                        ? "bg-rose-500/10 border-rose-500/30 text-rose-400" 
-                        : "bg-slate-900/40 border-slate-900/10 text-slate-650"
+                    <div key={b.id} className={`p-4 rounded-2xl border flex gap-3 items-center ${
+                      b.unlocked ? "bg-rose-500/[0.01] border-rose-500/20 text-rose-450" : "bg-slate-950/20 border-white/5 text-slate-600"
                     }`}>
-                      <Award size={24} className={b.unlocked ? "text-rose-400" : "text-slate-700"} />
+                      <Award size={20} className={b.unlocked ? "text-rose-500" : "text-slate-700"} />
                       <div>
-                        <h4 className="font-bold text-xs text-slate-200">{b.title}</h4>
-                        <p className="text-[10px] text-slate-500 mt-1">{b.description}</p>
+                        <h4 className="font-bold text-xs text-slate-200 leading-none">{b.title}</h4>
+                        <p className="text-[9px] text-slate-500 mt-1.5 leading-normal">{b.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        )
-      )}
+          </motion.div>
+        )}
 
-      {/* ================= APPOINTMENTS TAB ================= */}
-      {currentTab === "appointments" && (
-        loading ? <SkeletonAppointments /> : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
-            {/* Reservation Form */}
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
-                <Calendar size={18} />
-                Schedule Donation Appointment
+        {/* ================= APPOINTMENTS TAB ================= */}
+        {currentTab === "appointments" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Book Appointment Form */}
+            <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-5 h-fit">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <Calendar size={14} className="text-rose-500" />
+                Reserve Donation Slot
               </h3>
               <form onSubmit={handleBookAppointment} className="space-y-4 text-xs">
-                {/* Select City */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-400 uppercase tracking-wider">Select City</label>
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => handleCityChange(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
-                  >
-                    {cities.map((city) => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                    {cities.length === 0 && (
-                      <option value="">No cities available</option>
-                    )}
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">City Hub</label>
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => handleCityChange(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
+                    >
+                      {cities.map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-455">Time Slot</label>
+                    <select
+                      value={appointmentTime}
+                      onChange={(e) => setAppointmentTime(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
+                    >
+                      {["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"].map((t) => (
+                        <option key={t} value={t}>{t} AM/PM</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                {/* Select Hospital */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-400 uppercase tracking-wider">Select Facility Center</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">Target Facility</label>
                   <select
                     value={selectedCenter}
                     onChange={(e) => setSelectedCenter(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
                   >
-                    {filteredHospitals.map((hosp) => (
-                      <option key={hosp.name} value={hosp.name}>{hosp.name}</option>
+                    {filteredHospitals.map((h) => (
+                      <option key={h.id} value={h.name}>{h.name}</option>
                     ))}
-                    {filteredHospitals.length === 0 && (
-                      <option value="">No hospitals available in this city</option>
-                    )}
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Date</label>
-                    <input
-                      type="date"
-                      required
-                      min={new Date().toISOString().split("T")[0]}
-                      value={appointmentDate}
-                      onChange={(e) => setAppointmentDate(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Time</label>
-                    <input
-                      type="time"
-                      required
-                      value={appointmentTime}
-                      onChange={(e) => setAppointmentTime(e.target.value)}
-                      className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">Reservation Date</label>
+                  <input
+                    type="date"
+                    value={appointmentDate}
+                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100"
+                  />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/20 transition-all cursor-pointer"
+                  className="w-full py-3 bg-rose-650 hover:bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-600/25 cursor-pointer"
                 >
-                  Schedule Appointment
+                  Reserve Slot
                 </button>
               </form>
             </div>
 
-            {/* Reserved Appointments List */}
-            <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold">Your Scheduled Donations</h3>
+            {/* Booked list */}
+            <div className="lg:col-span-2 bg-slate-900/35 border border-white/5 p-6 rounded-3xl">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">Scheduled Appointments</h3>
               <div className="space-y-3">
                 {scheduledAppts.map((appt) => (
-                  <div key={appt.id} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex justify-between items-center text-xs">
+                  <div key={appt.id} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex justify-between items-center text-xs">
                     <div>
-                      <h4 className="font-bold text-slate-200">{appt.center}</h4>
-                      <p className="text-slate-500 mt-1">
-                        Location: {appt.city || "New Delhi"} • Date: {appt.date} • Time: {appt.time}
-                      </p>
+                      <p className="font-bold text-slate-200">{appt.center}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">📍 {appt.city}</p>
                     </div>
-                    <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg font-bold uppercase text-[9px] border border-emerald-500/20">
-                      Confirmed
-                    </span>
+                    <div className="text-right">
+                      <p className="font-extrabold text-rose-455">{appt.date}</p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">{appt.time}</p>
+                    </div>
                   </div>
                 ))}
-                {scheduledAppts.length === 0 && (
-                  <p className="text-xs text-slate-500 text-center py-4">No donation appointments scheduled.</p>
-                )}
               </div>
             </div>
-          </div>
-        )
-      )}
+          </motion.div>
+        )}
 
-      {/* ================= ELIGIBILITY CHECKER TAB ================= */}
-      {currentTab === "eligibility" && (
-        <div className="max-w-2xl mx-auto glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <HeartHandshake size={18} className="text-rose-500" />
-            AI Eligibility Analyzer
-          </h3>
-          <p className="text-xs text-slate-400">
-            Enter your health metrics. Our machine learning classifier will assess donation eligibility probability.
-          </p>
+        {/* ================= ELIGIBILITY TAB ================= */}
+        {currentTab === "eligibility" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Input Form */}
+            <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-5 h-fit">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <HeartHandshake size={14} className="text-rose-500" />
+                Diagnostic Auditing
+              </h3>
+              <form onSubmit={handleCheckEligibility} className="space-y-4 text-xs">
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-black uppercase text-slate-450">Age</label>
+                    <input
+                      type="number"
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-2.5 py-2 text-slate-100"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-black uppercase text-slate-450">Weight</label>
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-2.5 py-2 text-slate-100"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-black uppercase text-slate-455">Hemo</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={hemoglobin}
+                      onChange={(e) => setHemoglobin(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-2.5 py-2 text-slate-100"
+                    />
+                  </div>
+                </div>
 
-          <form onSubmit={handleCheckEligibility} className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Age (Years)</label>
-                <input
-                  type="number"
-                  required
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Weight (Kg)</label>
-                <input
-                  type="number"
-                  required
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                />
-              </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-black uppercase text-slate-450">Months Since Last Donation</label>
+                  <input
+                    type="number"
+                    value={lastMonths}
+                    onChange={(e) => setLastMonths(e.target.value)}
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100"
+                  />
+                </div>
+
+                <div className="space-y-3.5 pt-2 border-t border-white/5">
+                  {[
+                    { id: "conds", label: "Medical chronic conditions", state: conditions, setter: setConditions },
+                    { id: "trav", label: "Suspicious transit history", state: travel, setter: setTravel },
+                    { id: "vacc", label: "Vaccines in last 14 days", state: vaccine, setter: setVaccine }
+                  ].map((chk) => (
+                    <div key={chk.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={chk.id}
+                        checked={chk.state}
+                        onChange={(e) => chk.setter(e.target.checked)}
+                        className="rounded border-white/10 text-rose-600 bg-slate-950 focus:ring-rose-500 cursor-pointer"
+                      />
+                      <label htmlFor={chk.id} className="text-[10px] text-slate-400 cursor-pointer select-none">
+                        {chk.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={checking}
+                  className="w-full py-3 bg-rose-650 hover:bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-600/25 cursor-pointer disabled:opacity-50"
+                >
+                  {checking ? "Checking..." : "Evaluate Eligibility"}
+                </button>
+              </form>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Hemoglobin (g/dL)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={hemoglobin}
-                  onChange={(e) => setHemoglobin(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Last Donated (Months)</label>
-                <input
-                  type="number"
-                  required
-                  value={lastMonths}
-                  onChange={(e) => setLastMonths(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Checkbox markers */}
-            <div className="space-y-2 pt-2 border-t border-slate-900">
-              <label className="flex items-center gap-2 text-slate-300 font-semibold cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={conditions}
-                  onChange={(e) => setConditions(e.target.checked)}
-                  className="rounded border-slate-800 text-rose-600 focus:ring-0 cursor-pointer"
-                />
-                Active medical conditions?
-              </label>
-
-              <label className="flex items-center gap-2 text-slate-300 font-semibold cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={travel}
-                  onChange={(e) => setTravel(e.target.checked)}
-                  className="rounded border-slate-800 text-rose-600 focus:ring-0 cursor-pointer"
-                />
-                Recent malaria-risk travel?
-              </label>
-
-              <label className="flex items-center gap-2 text-slate-300 font-semibold cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={vaccine}
-                  onChange={(e) => setVaccine(e.target.checked)}
-                  className="rounded border-slate-800 text-rose-600 focus:ring-0 cursor-pointer"
-                />
-                Vaccinated in last 14 days?
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={checking}
-              className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 transition-all cursor-pointer"
-            >
-              {checking ? "Analyzing indicators..." : "Check Safety Profile"}
-            </button>
-          </form>
-
-          {eligResult && (
-            <div className={`p-4 rounded-2xl border text-xs space-y-2 animate-in zoom-in-95 duration-100 ${
-              eligResult.is_eligible 
-                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                : "bg-red-500/10 border-red-500/20 text-red-400"
-            }`}>
-              <div className="flex items-center justify-between font-bold">
-                <span>{eligResult.is_eligible ? "✓ Safe to Donate" : "✗ Temporarily Deferred"}</span>
-                <span>{eligResult.score.toFixed(0)}% Match Score</span>
-              </div>
-              <p className="text-slate-400 font-normal leading-relaxed">{eligResult.reason}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= REQUESTS TAB ================= */}
-      {currentTab === "requests" && (
-        loading ? <SkeletonRequests /> : (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Header alert */}
-            <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-sm font-semibold">
-              <AlertTriangle size={18} className="animate-pulse flex-shrink-0" />
-              <span>
-                {activeRequests.filter(r => r.emergency_type === "critical").length} critical blood request{activeRequests.filter(r => r.emergency_type === "critical").length !== 1 ? "s" : ""} need your help. Review and respond below.
-              </span>
-              <button
-                onClick={loadDonorData}
-                className="ml-auto text-[10px] px-3 py-1.5 border border-rose-500/30 rounded-lg hover:bg-rose-500/20 transition-all cursor-pointer"
-              >
-                Refresh
-              </button>
-            </div>
-
-            {/* Request Notification Cards */}
-            <div className="space-y-4">
-              {activeRequests.length === 0 ? (
-                <div className="glass-panel p-12 rounded-2xl border border-slate-800 text-center text-slate-500 text-sm">
-                  No active patient blood requests at the moment.
+            {/* Results */}
+            <div className="lg:col-span-2 bg-slate-900/35 border border-white/5 p-6 rounded-3xl">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">Diagnostic Output</h3>
+              {eligResult ? (
+                <div className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 text-center space-y-4">
+                  <div className={`mx-auto w-12 h-12 rounded-full border flex items-center justify-center ${
+                    eligResult.is_eligible ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-450" : "bg-red-500/10 border-red-500/20 text-red-450"
+                  }`}>
+                    {eligResult.is_eligible ? <CheckCircle size={24} /> : <AlertTriangle size={24} />}
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-200">
+                      {eligResult.is_eligible ? "Evaluated Status: Eligible" : "Evaluated Status: Ineligible"}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">{eligResult.reason}</p>
+                  </div>
                 </div>
               ) : (
-                activeRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="glass-panel p-5 rounded-2xl border border-slate-800/80 transition-all duration-200 bg-slate-900/20"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
-                        {/* Severity Icon */}
-                        <div className={`mt-0.5 p-2.5 rounded-xl flex-shrink-0 ${
-                          req.emergency_type === "critical" ? "bg-red-500/15 text-red-500" :
-                          req.emergency_type === "urgent" ? "bg-amber-500/15 text-amber-500" :
-                          "bg-blue-500/15 text-blue-500"
-                        }`}>
-                          <AlertTriangle size={18} />
-                        </div>
-
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-extrabold text-slate-100 text-sm">{req.recipient_name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                              req.emergency_type === "critical"
-                                ? "bg-red-600 text-white border border-red-500 glow-critical-badge animate-pulse"
-                                : req.emergency_type === "urgent"
-                                  ? "bg-amber-500 text-white border border-amber-400 glow-urgent-badge animate-pulse"
-                                  : "bg-blue-500/15 text-blue-500 border border-blue-500/20"
-                            }`}>
-                              {req.emergency_type}
-                            </span>
-                            <span className="text-[10px] text-slate-500">#{req.id}</span>
-                          </div>
-
-                          <p className="text-xs text-slate-400 mt-1">{req.hospital_name}</p>
-
-                          <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
-                            <span>
-                              Blood Group: <strong className="text-rose-400 font-black">{req.blood_group}</strong>
-                            </span>
-                            <span>
-                              Volume: <strong className="text-slate-300">{req.units_required} Units</strong>
-                            </span>
-                            <span>
-                              AI Priority: <strong className="text-rose-400 font-mono">{req.priority_score?.toFixed(1)} / 100</strong>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* CTA buttons */}
-                      <div className="flex flex-col gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => {
-                            setToast({
-                              message: `🩸 Response confirmed! The hospital ${req.hospital_name} has been notified that you are on your way. Safe travels, hero!`,
-                              type: "success"
-                            });
-                            setTimeout(() => {
-                              setActiveRequests(prev => prev.filter(r => r.id !== req.id));
-                            }, 1000);
-                          }}
-                          className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/20"
-                        >
-                          Respond Now
-                        </button>
-                        <button
-                          onClick={() => setActiveRequests(prev => prev.filter(r => r.id !== req.id))}
-                          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 text-[11px] font-semibold rounded-xl border border-slate-800 transition-all cursor-pointer"
-                        >
-                          Dismiss
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                <p className="text-xs text-slate-500 text-center py-10 font-medium">Please submit the eligibility audit parameters.</p>
               )}
             </div>
-          </div>
-        )
-      )}
+          </motion.div>
+        )}
 
-      {/* ================= BLOOD TYPING TEST TAB ================= */}
-      {currentTab === "bloodtest" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
-          {/* Reservation Form */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
-            <h3 className="text-lg font-bold flex items-center gap-2 text-rose-500">
-              <Activity size={18} />
-              Book Blood Typing Test
-            </h3>
-            <p className="text-xs text-slate-400">
-              Don't know your blood group? Book a quick, free blood typing test at one of our partner medical centers.
-            </p>
-            <form onSubmit={handleBookTest} className="space-y-4 text-xs">
-              {/* Select City */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Select City</label>
-                <select
-                  value={selectedCity}
-                  onChange={(e) => handleCityChange(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
-                >
-                  {cities.map((city) => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                  {cities.length === 0 && (
-                    <option value="">No cities available</option>
-                  )}
-                </select>
-              </div>
+        {/* ================= NEW BLOOD TYPING TEST TAB ================= */}
+        {currentTab === "bloodtest" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Booking Form */}
+            <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-5 h-fit">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <ActivitySquare size={14} className="text-rose-500" />
+                Book Typing Test
+              </h3>
+              <form onSubmit={handleBookTest} className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-455">City Hub</label>
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => handleCityChange(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
+                    >
+                      {cities.map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-455">Time Slot</label>
+                    <select
+                      value={appointmentTime}
+                      onChange={(e) => setAppointmentTime(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
+                    >
+                      {["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"].map((t) => (
+                        <option key={t} value={t}>{t} AM/PM</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-              {/* Select Hospital */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Select Hospital / Clinic</label>
-                <select
-                  value={selectedCenter}
-                  onChange={(e) => setSelectedCenter(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none"
-                >
-                  {filteredHospitals.map((hosp) => (
-                    <option key={hosp.name} value={hosp.name}>{hosp.name}</option>
-                  ))}
-                  {filteredHospitals.length === 0 && (
-                    <option value="">No hospitals available in this city</option>
-                  )}
-                </select>
-              </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">Hospital/Camp Center</label>
+                  <select
+                    value={selectedCenter}
+                    onChange={(e) => setSelectedCenter(e.target.value)}
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-200"
+                  >
+                    {filteredHospitals.map((h) => (
+                      <option key={h.id} value={h.name}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Date</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">Date of Test</label>
                   <input
                     type="date"
-                    required
-                    min={new Date().toISOString().split("T")[0]}
                     value={appointmentDate}
                     onChange={(e) => setAppointmentDate(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-400 uppercase tracking-wider">Preferred Time</label>
-                  <input
-                    type="time"
-                    required
-                    value={appointmentTime}
-                    onChange={(e) => setAppointmentTime(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
-                  />
-                </div>
-              </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-rose-650 hover:bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-600/25 cursor-pointer"
+                >
+                  Book Typing Slot
+                </button>
+              </form>
+            </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20 text-center"
-              >
-                Schedule Free Typing Test
-              </button>
-            </form>
-          </div>
-
-          {/* Hospitals and Camps shelf */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Booking Confirmed Slip */}
-            {testBooking && (
-              <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-4 animate-in slide-in-from-top-5 duration-200">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle size={20} />
-                  <h3 className="font-bold text-sm">Blood Test Appointment Scheduled!</h3>
-                </div>
-                <div className="p-4 bg-slate-950/45 rounded-xl border border-slate-800 text-xs space-y-2">
-                  <p><strong>Appointment Type:</strong> Blood Group Typing Test (Pre-donation)</p>
-                  <p><strong>Facility:</strong> {testBooking.center} ({testBooking.city})</p>
-                  <p><strong>Date & Time:</strong> {testBooking.date} at {testBooking.time}</p>
-                  <p className="text-slate-400 mt-1">Please show this screen or provide your registered name at the reception. The test is completely free.</p>
-                </div>
-              </div>
-            )}
-
-            {/* Upcoming Camps and Near Facilities List */}
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <MapPin size={18} className="text-rose-500" />
-                Partner Medical Centers & Upcoming Camps
-              </h3>
-              
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                {/* Mock Camps */}
-                <div className="p-4 rounded-xl bg-rose-600/10 border border-rose-500/20 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[9px] uppercase tracking-wider animate-pulse">Active Camp</span>
-                    <span className="text-[10px] text-slate-400 font-mono">Aug 10 - Aug 12</span>
-                  </div>
-                  <h4 className="font-bold text-slate-200 text-xs">Mega Voluntary Blood Typing & Donation Drive</h4>
-                  <p className="text-[10px] text-slate-500">Kakinada Red Cross Blood Center, Main Road, Ramanayyapeta</p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-bold text-[9px] uppercase tracking-wider">Upcoming Camp</span>
-                    <span className="text-[10px] text-slate-400 font-mono">Aug 24</span>
-                  </div>
-                  <h4 className="font-bold text-slate-200 text-xs">Arogya Voluntary Youth Camp</h4>
-                  <p className="text-[10px] text-slate-500">Bhanugudi Junction, Kakinada, AP 533003</p>
-                </div>
-
-                {/* Partner Hospitals */}
-                {filteredHospitals.map((hosp) => (
-                  <div key={hosp.name} className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex justify-between items-center">
+            {/* Details for Booking & Near Centers */}
+            <div className="lg:col-span-2 space-y-6">
+              {testBooking && (
+                <div className="p-4 bg-white/[0.01] border border-white/5 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <Check size={14} className="text-rose-455" />
+                    Active Reservation Reserved
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <h4 className="font-bold text-slate-200 text-xs">{hosp.name}</h4>
-                      <p className="text-[10px] text-slate-500 mt-1">{hosp.city}</p>
+                      <p className="text-slate-500 font-bold text-[9px] uppercase tracking-wider">Facility Hub</p>
+                      <p className="font-extrabold text-slate-200 mt-1">{testBooking.center}</p>
                     </div>
-                    <span className="px-2.5 py-1 bg-slate-950 border border-slate-850 rounded-lg text-[9px] font-bold text-rose-400">Partner Facility</span>
+                    <div>
+                      <p className="text-slate-500 font-bold text-[9px] uppercase tracking-wider">Reservation Code</p>
+                      <p className="font-mono text-rose-455 mt-1">#TST-{testBooking.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 font-bold text-[9px] uppercase tracking-wider">Date</p>
+                      <p className="font-semibold text-slate-350 mt-1">{testBooking.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 font-bold text-[9px] uppercase tracking-wider">Time</p>
+                      <p className="font-semibold text-slate-350 mt-1">{testBooking.time}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Certificate Modal Overlay */}
-      {activeCert && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setActiveCert(null)}
-              className="absolute right-6 top-6 text-slate-400 hover:text-slate-200 text-sm font-semibold cursor-pointer"
-            >
-              Close
-            </button>
-
-            <div className="border-4 border-double border-rose-600/30 p-6 rounded-2xl space-y-5">
-              <span className="text-4xl">🏆</span>
-              <div className="space-y-1">
-                <h3 className="text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400">
-                  DIGITAL DONATION CERTIFICATE
-                </h3>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">AI Powered Digital Blood Bank</p>
-              </div>
-
-              <div className="space-y-2 mt-4 text-xs text-slate-300">
-                <p>This is proudly awarded to our distinguished life saver</p>
-                <p className="text-lg font-black text-slate-100 underline decoration-rose-500 underline-offset-4">John Doe</p>
-                <p>for donating 1.0 unit of blood to support clinical emergencies.</p>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-slate-800/80 pt-5 mt-4">
-                <div className="text-left text-[9px] text-slate-500 font-bold">
-                  <p>CERTIFICATE ID: #{activeCert.id}</p>
-                  <p>DATE: {new Date(activeCert.donation_date).toLocaleDateString()}</p>
                 </div>
-                <div className="h-14 w-14 bg-white p-1 rounded-md shadow-md flex items-center justify-center">
-                  <div className="h-12 w-12 border-2 border-black flex flex-col justify-between p-0.5">
-                    <div className="flex justify-between"><div className="w-3 h-3 bg-black"></div><div className="w-3 h-3 bg-black"></div></div>
-                    <div className="flex justify-between"><div className="w-3 h-3 bg-black"></div><div className="w-3.5 h-3.5 bg-black border-2 border-white rounded-full"></div></div>
-                  </div>
+              )}
+
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Near Hospitals & active Camps</h3>
+                <div className="space-y-3">
+                  {[
+                    { name: "GGH Kakinada Camp #1", address: "GGH Ground, Surya Rao Peta, Kakinada, AP 533001", slots: "3 slots left", status: "Active Today" },
+                    { name: "Apollo Blood Typing Lab", address: "Hospital Rd, Beside Apollo Gynae Wing, Kakinada, AP 533001", slots: "6 slots left", status: "Bookable" }
+                  ].map((camp, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex justify-between items-center text-xs">
+                      <div>
+                        <h4 className="font-extrabold text-slate-200">{camp.name}</h4>
+                        <p className="text-[10px] text-slate-550 mt-1 truncate max-w-xs">📍 {camp.address}</p>
+                        <p className="text-[9px] text-rose-450 mt-1 font-bold">{camp.slots}</p>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-455 rounded-lg flex-shrink-0">
+                        {camp.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {/* Floating Toast Notification Overlay */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 p-4 rounded-2xl border border-rose-500/20 bg-slate-900/90 text-slate-100 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300">
-          <div className="p-1.5 bg-rose-600/10 rounded-lg text-rose-500 animate-pulse">
-            <CheckCircle size={16} />
-          </div>
-          <span className="text-xs font-semibold">{toast.message}</span>
-        </div>
-      )}
+        {/* ================= REQUESTS LIST TAB ================= */}
+        {currentTab === "requests" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl"
+          >
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">Urgent Requests log</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-wider">
+                    <th className="pb-3 font-bold">Request ID</th>
+                    <th className="pb-3 font-bold">Recipient</th>
+                    <th className="pb-3 font-bold text-center">Group</th>
+                    <th className="pb-3 font-bold text-center">Volume</th>
+                    <th className="pb-3 font-bold">Hospital Facility</th>
+                    <th className="pb-3 font-bold text-right">Priority score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {activeRequests.map((r) => (
+                    <tr key={r.id} className="hover:bg-white/[0.01]">
+                      <td className="py-3.5 font-mono text-slate-500">#REQ-{r.id}</td>
+                      <td className="py-3.5 font-bold text-slate-200">{r.recipient_name}</td>
+                      <td className="py-3.5 font-black text-rose-450 text-center">{r.blood_group}</td>
+                      <td className="py-3.5 text-slate-300 font-semibold text-center">{r.units_required} U</td>
+                      <td className="py-3.5 text-slate-400">{r.hospital_name}</td>
+                      <td className="py-3.5 font-mono font-black text-rose-450 text-right">{r.priority_score?.toFixed(1)} / 100</td>
+                    </tr>
+                  ))}
+                  {activeRequests.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-650">No urgent matching broadcasts pending.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

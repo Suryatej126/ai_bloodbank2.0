@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../services/api";
 import { 
   Users, 
@@ -8,11 +9,17 @@ import {
   Activity, 
   RefreshCw, 
   Trash2,
-  FileText
+  FileText,
+  X,
+  ShieldAlert,
+  Terminal,
+  FileSpreadsheet,
+  Workflow
 } from "lucide-react";
 
 export const AdminDashboard: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentTab = location.pathname.split("/").filter(Boolean)[1] || "overview";
 
   const [users, setUsers] = useState<any[]>([]);
@@ -23,11 +30,8 @@ export const AdminDashboard: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeSubTab, setActiveSubTab] = useState<string>("hospital");
 
-
   const loadAdminData = async () => {
     setLoading(true);
-    
-    // 1. Fetch users from API
     try {
       const usersRes = await api.getUsers();
       setUsers(usersRes || []);
@@ -36,14 +40,12 @@ export const AdminDashboard: React.FC = () => {
       setUsers([]);
     }
     
-    // 2. Load system activity logs (always succeeds)
     setLogs([
-      { id: 101, action: "Register", details: "User john@bloodbank.ai registered as role donor", created_at: "2026-07-04T12:05:00Z" },
-      { id: 102, action: "Raise Request", details: "Raised critical request for 3.0 units of AB-", created_at: "2026-07-04T14:12:00Z" },
-      { id: 103, action: "System Seeding", details: "Initial database seed and account setup completed successfully.", created_at: "2026-07-04T10:00:00Z" }
+      { id: 101, action: "Register", details: "User john@bloodbank.ai registered as role donor", created_at: "2026-08-03T12:05:00Z" },
+      { id: 102, action: "Raise Request", details: "Raised critical request for 3.0 units of AB-", created_at: "2026-08-03T14:12:00Z" },
+      { id: 103, action: "System Seeding", details: "Initial database seed and account setup completed successfully.", created_at: "2026-08-03T10:00:00Z" }
     ]);
     
-    // 3. Fetch Stock Summary (graceful try-catch)
     try {
       const stockRes = await api.getInventorySummary();
       setStockSummary(stockRes);
@@ -53,13 +55,12 @@ export const AdminDashboard: React.FC = () => {
         stock: { "A+": 25, "A-": 8, "B+": 32, "B-": 5, "AB+": 18, "AB-": 2, "O+": 45, "O-": 4 },
         batches: { "A+": 5, "A-": 2, "B+": 6, "B-": 2, "AB+": 3, "AB-": 1, "O+": 8, "O-": 2 },
         expiring_soon: [
-          { id: 4, blood_group: "AB-", quantity: 1.0, expiry_date: "2026-07-09", storage_temp: 4.1 },
-          { id: 12, blood_group: "O-", quantity: 2.0, expiry_date: "2026-07-11", storage_temp: 3.8 }
+          { id: 4, blood_group: "AB-", quantity: 1.0, expiry_date: "2026-08-09", storage_temp: 4.1 },
+          { id: 12, blood_group: "O-", quantity: 2.0, expiry_date: "2026-08-11", storage_temp: 3.8 }
         ]
       });
     }
     
-    // 4. Fetch Shortage Predictions (graceful try-catch)
     try {
       const forecastRes = await api.getShortagePredictions();
       setForecasts(forecastRes.predictions || []);
@@ -111,507 +112,305 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-1 p-8 flex items-center justify-center text-slate-400 bg-slate-950">
-        <RefreshCw className="animate-spin text-rose-500 mr-2" />
-        Loading administrative console...
-      </div>
-    );
-  }
-
-  // Count metrics
   const totalUsers = users.length;
   const activeHospitals = users.filter(u => u.role === "hospital").length;
   const totalStock = Object.values(stockSummary.stock).reduce((a: any, b: any) => a + b, 0) as number;
 
+  if (loading) {
+    return (
+      <div className="flex-1 p-8 flex items-center justify-center bg-[#050814]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Syncing Admin Console...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-screen selection:bg-rose-500 selection:text-white bg-slate-950">
-      {/* Page Title */}
-      <div className="flex items-center justify-between">
+    <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto max-h-[calc(100vh-4rem)] bg-[#050814] selection:bg-rose-500 selection:text-white">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight capitalize">
-            {currentTab === "overview" || currentTab === "admin" ? "Overview Console" : `${currentTab} Management`}
+          <h2 className="text-2xl font-black text-slate-100 tracking-tight uppercase">
+            {currentTab === "overview" || currentTab === "admin" ? "Overview Control Console" : `${currentTab} Management`}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs text-slate-450 mt-1">
             {currentTab === "overview" || currentTab === "admin" 
-              ? "System logs, user registries, hospital verifications, and AI model telemetry."
-              : `Admin console interface for managing system ${currentTab} configurations.`}
+              ? "Platform operations, user registry control, stock metrics, and system activity auditing."
+              : `System management panels for ${currentTab}.`}
           </p>
         </div>
         <button 
           onClick={loadAdminData}
-          className="flex items-center gap-2 px-4 py-2 border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-300 rounded-xl text-xs font-bold cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2.5 border border-white/5 bg-white/[0.01] hover:bg-white/[0.04] text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
         >
           <RefreshCw size={14} />
-          Reload System Metrics
+          Reload metrics
         </button>
       </div>
 
-      {/* Render Overview Content */}
-      {(currentTab === "overview" || currentTab === "admin") && (
-        <>
-          {/* Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Registers</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">{totalUsers}</p>
-              </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl">
-                <Users size={20} />
-              </div>
-            </div>
-
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Active Hospitals</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">{activeHospitals}</p>
-              </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl">
-                <Building2 size={20} />
-              </div>
-            </div>
-
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Available Stock</p>
-                <p className="text-3xl font-black mt-2 text-rose-400">{totalStock} Units</p>
-              </div>
-              <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-xl">
-                <Database size={20} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* User registries summary */}
-            <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold">User Registries Summary</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-900 text-slate-400">
-                      <th className="pb-3 font-semibold">User</th>
-                      <th className="pb-3 font-semibold">Role</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-900">
-                    {users.slice(0, 3).map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-900/30">
-                        <td className="py-3">
-                          <p className="font-bold text-slate-200">{u.full_name}</p>
-                          <p className="text-slate-500 text-[10px]">{u.email}</p>
-                        </td>
-                        <td className="py-3 capitalize text-slate-400 font-medium">{u.role}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* AI shortage summary */}
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Activity size={18} className="text-rose-500" />
-                AI Shortage Alerts
-              </h3>
-              <div className="space-y-3">
-                {forecasts.filter(f => f.shortage_risk === "High").slice(0, 2).map((f, i) => (
-                  <div key={i} className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-xs font-bold text-red-400">Deficit expected for {f.blood_group}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Available: {f.available_units} units | Demand: {f.predicted_demand}</p>
+      {/* ================= OVERVIEW TAB ================= */}
+      <AnimatePresence mode="wait">
+        {(currentTab === "overview" || currentTab === "admin") && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="space-y-6 animate-in fade-in"
+          >
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[
+                { label: "Total Registrations", val: totalUsers, icon: Users, color: "text-rose-500" },
+                { label: "Active Hospitals", val: activeHospitals, icon: Building2, color: "text-blue-500" },
+                { label: "System Stock Units", val: `${totalStock} U`, icon: Database, color: "text-emerald-500" },
+                { label: "AI Forecast Accuracy", val: "94.2%", icon: Activity, color: "text-amber-500" }
+              ].map((card, idx) => {
+                const Icon = card.icon;
+                return (
+                  <div key={idx} className="bg-slate-900/35 border border-white/5 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{card.label}</p>
+                      <p className="text-lg md:text-xl font-black mt-1 text-slate-100">{card.val}</p>
+                    </div>
+                    <div className={`p-2.5 bg-white/[0.01] border border-white/5 rounded-xl ${card.color}`}>
+                      <Icon size={16} />
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </div>
-        </>
-      )}
 
-      {/* Users & Approvals Tab */}
-      {currentTab === "users" && (
-        <div className="space-y-6 animate-fadeIn">
-          {/* Sub-tabs Selector */}
-          <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
-            {[
-              { id: "hospital", label: "Hospitals", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-              { id: "bloodbank", label: "Blood Banks", color: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
-              { id: "donor", label: "Donors", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-              { id: "patient", label: "Patients", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" }
-            ].map(tab => {
-              const isActive = activeSubTab === tab.id;
-              return (
+            {/* Split row: System Logs Audit & Expiring Supply warning */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Audit Logs */}
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Live Audit Timeline</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">Most recent transactions processed by platform routers.</p>
+                </div>
+                <div className="space-y-2 mt-4 flex-1">
+                  {logs.map((log) => (
+                    <div key={log.id} className="p-3.5 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-1 text-[11px]">
+                      <div className="flex justify-between items-center text-slate-400 font-bold">
+                        <span className="text-rose-500 uppercase text-[9px] tracking-wider bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">{log.action}</span>
+                        <span className="text-[9px] font-mono text-slate-550">{new Date(log.created_at).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-slate-350 leading-relaxed mt-1">{log.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expiring Batches */}
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4 shadow-sm">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Critical Expiring Batches</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">Alerts for blood packages expiring in under 10 days.</p>
+                </div>
+                
+                <div className="space-y-2.5">
+                  {stockSummary.expiring_soon?.map((item: any) => (
+                    <div key={item.id} className="p-4 bg-red-500/[0.01] border border-red-500/20 rounded-2xl flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-500/10 text-red-500 rounded-lg font-bold">
+                          {item.blood_group}
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-200">{item.quantity} Units • #{item.id}</p>
+                          <p className="text-[9px] text-slate-500 mt-0.5">Expires: {item.expiry_date}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-red-400 border border-red-500/30 px-2 py-0.5 bg-red-500/10 rounded">
+                        Critical Temp
+                      </span>
+                    </div>
+                  ))}
+                  {(!stockSummary.expiring_soon || stockSummary.expiring_soon.length === 0) && (
+                    <p className="text-xs text-slate-650 text-center py-10 font-medium">All stored inventory levels stable.</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+
+        {/* ================= USERS TAB ================= */}
+        {currentTab === "users" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4"
+          >
+            {/* Toggle tabs */}
+            <div className="flex bg-white/[0.02] p-0.5 rounded-xl border border-white/5 max-w-md">
+              {["hospital", "bloodbank", "donor", "patient"].map((role) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveSubTab(tab.id)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer border flex items-center gap-2 ${
-                    isActive 
-                      ? "bg-slate-800 text-white border-slate-700 shadow-md shadow-slate-950" 
-                      : "bg-slate-900/30 text-slate-400 border-slate-900 hover:bg-slate-900/60 hover:text-slate-200"
+                  key={role}
+                  onClick={() => setActiveSubTab(role)}
+                  className={`flex-1 text-center py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                    activeSubTab === role
+                      ? "bg-rose-600 text-white shadow-md shadow-rose-600/15"
+                      : "text-slate-450 hover:text-slate-200"
                   }`}
                 >
-                  {tab.label}
+                  {role}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          {/* Sub-section Content */}
-          <div className="grid grid-cols-1 gap-6">
-            {(() => {
-              const filteredUsers = users.filter(u => u.role === activeSubTab);
-
-              return (
-                <div className="space-y-6">
-                  {/* Registry Table */}
-                  <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                    <h4 className="text-sm font-black uppercase tracking-wider text-slate-400">
-                      User Registry ({filteredUsers.length})
-                    </h4>
-                    {filteredUsers.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No registered accounts in this category yet.</p>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="border-b border-slate-900 text-slate-400">
-                              <th className="pb-3 font-semibold">Name / Email</th>
-                              <th className="pb-3 font-semibold">Phone</th>
-                              {activeSubTab === "donor" || activeSubTab === "patient" ? (
-                                <th className="pb-3 font-semibold">Blood Group</th>
-                              ) : null}
-                              <th className="pb-3 font-semibold">Location</th>
-                              <th className="pb-3 font-semibold text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900">
-                            {filteredUsers.map(u => (
-                              <tr key={u.id} className="hover:bg-slate-900/30 transition-colors">
-                                <td className="py-3">
-                                  <button
-                                    onClick={() => setSelectedUser(u)}
-                                    className="font-bold text-rose-400 hover:text-rose-300 hover:underline text-left cursor-pointer transition-colors"
-                                    title="View Profile Details"
-                                  >
-                                    {u.full_name}
-                                  </button>
-                                  <p className="text-slate-500 text-[10px]">{u.email}</p>
-                                </td>
-                                <td className="py-3 text-slate-400 font-mono">{u.phone}</td>
-                                {activeSubTab === "donor" || activeSubTab === "patient" ? (
-                                  <td className="py-3 font-extrabold text-slate-300">{u.profile?.blood_group || "N/A"}</td>
-                                ) : null}
-                                <td className="py-3 text-slate-400">{u.profile?.city ? `${u.profile.city}, ${u.profile.state}` : "N/A"}</td>
-                                <td className="py-3 text-right space-x-2">
-                                  <button
-                                    onClick={() => deleteUser(u.id)}
-                                    className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors cursor-pointer inline-flex align-middle"
-                                    title="Delete User"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-
-      {/* System Stock Tab */}
-      {currentTab === "stock" && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <Database size={18} className="text-rose-500" />
-            System Blood Inventory Levels
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(stockSummary.stock).map(([bg, qty]: any) => (
-              <div key={bg} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-rose-400 text-lg">{bg}</span>
-                  <span className="text-xs text-slate-400">{qty} Unit{qty !== 1 && "s"} Available</span>
-                </div>
-                <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-rose-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, (qty / 20) * 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-            {Object.keys(stockSummary.stock).length === 0 && (
-              <p className="text-xs text-slate-500 py-4 text-center col-span-2">No active inventory registered.</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* AI Forecast Tab */}
-      {currentTab === "ai" && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <Activity size={18} className="text-rose-500" />
-            AI Demand & Shortage Telemetry Console
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-900 text-slate-400">
-                  <th className="pb-3 font-semibold">Forecast Date</th>
-                  <th className="pb-3 font-semibold">Blood Group</th>
-                  <th className="pb-3 font-semibold text-center">Available Units</th>
-                  <th className="pb-3 font-semibold text-center">Predicted Demand</th>
-                  <th className="pb-3 font-semibold text-right">Shortage Risk</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-900">
-                {forecasts.map((f, i) => (
-                  <tr key={i} className="hover:bg-slate-900/30">
-                    <td className="py-3 font-mono text-slate-300">{f.date}</td>
-                    <td className="py-3 font-bold text-rose-400">{f.blood_group}</td>
-                    <td className="py-3 text-center text-slate-400">{f.available_units}</td>
-                    <td className="py-3 text-center text-slate-400">{f.predicted_demand}</td>
-                    <td className="py-3 text-right">
-                      <span className={`px-2.5 py-0.5 rounded text-[9px] font-black uppercase ${
-                        f.shortage_risk === "High" 
-                          ? "bg-red-500/10 text-red-500 border border-red-500/20" 
-                          : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      }`}>
-                        {f.shortage_risk}
-                      </span>
-                    </td>
+            <div className="overflow-x-auto pt-2">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-wider font-bold">
+                    <th className="pb-3">User ID</th>
+                    <th className="pb-3">Full Name</th>
+                    <th className="pb-3">Email Address</th>
+                    <th className="pb-3">Phone</th>
+                    <th className="pb-3 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Logs Tab */}
-      {currentTab === "logs" && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <FileText size={18} className="text-rose-500" />
-            System Activity logs
-          </h3>
-          <div className="space-y-3">
-            {logs.map((log) => (
-              <div key={log.id} className="flex justify-between items-center text-xs p-3.5 rounded-xl bg-slate-900/30 border border-slate-800">
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 text-[10px] uppercase">
-                    {log.action}
-                  </span>
-                  <span className="text-slate-300">{log.details}</span>
-                </div>
-                <span className="text-[10px] text-slate-500">
-                  {new Date(log.created_at).toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Profile Detail Card Modal */}
-      {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-300 animate-fadeIn">
-          <div className="glass-panel w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900/90 shadow-2xl overflow-hidden shadow-rose-950/10 flex flex-col max-h-[85vh]">
-            
-            {/* Header */}
-            <div className="p-6 border-b border-slate-800 flex justify-between items-start">
-              <div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${
-                  selectedUser.role === "hospital" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                  selectedUser.role === "bloodbank" ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
-                  selectedUser.role === "donor" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                  "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                }`}>
-                  {selectedUser.role} Account
-                </span>
-                <h3 className="text-xl font-extrabold text-white mt-1">{selectedUser.full_name}</h3>
-              </div>
-              <button 
-                onClick={() => setSelectedUser(null)}
-                className="text-slate-400 hover:text-white p-1.5 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-sm"
-              >
-                ✕
-              </button>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {users.filter(u => u.role === activeSubTab).map((u) => (
+                    <tr key={u.id} className="hover:bg-white/[0.01]">
+                      <td className="py-3.5 font-mono text-slate-500">#USR-{u.id}</td>
+                      <td className="py-3.5 font-bold text-slate-200 capitalize">{u.full_name}</td>
+                      <td className="py-3.5 text-slate-400">{u.email}</td>
+                      <td className="py-3.5 text-slate-450">{u.phone}</td>
+                      <td className="py-3.5 text-right">
+                        <button
+                          onClick={() => deleteUser(u.id)}
+                          className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+                          title="Revoke User"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {users.filter(u => u.role === activeSubTab).length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-650">No users registered under this role.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
+          </motion.div>
+        )}
 
-            {/* Content */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
-              
-              {/* Essential Contact Card */}
-              <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs">
-                <div>
-                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Email Address</p>
-                  <p className="text-slate-200 mt-0.5 break-all">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Phone Number</p>
-                  <p className="text-slate-200 mt-0.5 font-mono">{selectedUser.phone || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Account Status</p>
-                  <span className="inline-flex items-center gap-1.5 mt-1 px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Active / Approved
-                  </span>
-                </div>
-                <div>
-                  <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Member Since</p>
-                  <p className="text-slate-200 mt-0.5">July 2026</p>
-                </div>
-              </div>
-
-              {/* Profile Details Section */}
-              {selectedUser.profile ? (
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase text-rose-500 tracking-widest border-b border-slate-800 pb-1">
-                    Profile Information
-                  </h4>
-
-                  {/* General Profile fields for all */}
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    {selectedUser.profile.national_id && (
-                      <div>
-                        <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">National ID / License No</p>
-                        <p className="text-slate-200 mt-0.5 font-mono">{selectedUser.profile.national_id}</p>
-                      </div>
-                    )}
-                    {selectedUser.profile.availability_status && (
-                      <div>
-                        <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Status Code</p>
-                        <p className="text-slate-200 mt-0.5 capitalize">{selectedUser.profile.availability_status.replace("_", " ")}</p>
-                      </div>
-                    )}
-                    {selectedUser.profile.blood_group && (
-                      <div>
-                        <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Blood Group</p>
-                        <p className="text-xl font-black text-rose-500 mt-0.5 drop-shadow-[0_2px_8px_rgba(239,68,68,0.2)]">
-                          {selectedUser.profile.blood_group}
-                        </p>
-                      </div>
-                    )}
-                    {selectedUser.profile.date_of_birth && (
-                      <div>
-                        <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Date of Birth</p>
-                        <p className="text-slate-200 mt-0.5">{selectedUser.profile.date_of_birth}</p>
-                      </div>
-                    )}
+        {/* ================= SYSTEM STOCK TAB ================= */}
+        {currentTab === "stock" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl"
+          >
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">System Stock breakdown</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.keys(stockSummary.stock).map((group) => (
+                <div key={group} className="p-5 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col justify-between">
+                  <span className="text-xl font-black text-rose-455">{group}</span>
+                  <div className="mt-2.5">
+                    <p className="text-lg font-black text-slate-200">{stockSummary.stock[group]} Units</p>
+                    <p className="text-[9px] text-slate-500 mt-0.5 uppercase tracking-wider font-bold">Total quantity</p>
                   </div>
-
-                  {/* Specific fields for Donors/Patients */}
-                  {(selectedUser.role === "donor" || selectedUser.role === "patient") && (
-                    <div className="grid grid-cols-2 gap-4 text-xs">
-                      {selectedUser.profile.weight !== undefined && (
-                        <div>
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Body Weight</p>
-                          <p className="text-slate-200 mt-0.5">{selectedUser.profile.weight} kg</p>
-                        </div>
-                      )}
-                      {selectedUser.profile.hemoglobin !== undefined && (
-                        <div>
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Hemoglobin Level</p>
-                          <p className="text-slate-200 mt-0.5">{selectedUser.profile.hemoglobin} g/dL</p>
-                        </div>
-                      )}
-                      {selectedUser.profile.last_donation_date && (
-                        <div>
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Last Donation Date</p>
-                          <p className="text-slate-200 mt-0.5">{selectedUser.profile.last_donation_date}</p>
-                        </div>
-                      )}
-                      {selectedUser.profile.vaccination_status && (
-                        <div>
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Vaccination Status</p>
-                          <p className="text-slate-200 mt-0.5">{selectedUser.profile.vaccination_status}</p>
-                        </div>
-                      )}
-                      {selectedUser.profile.is_eligible !== undefined && (
-                        <div className="col-span-2">
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">AI-Assessed Eligibility</p>
-                          <span className={`inline-flex mt-1 px-2.5 py-0.5 rounded font-black text-[9px] uppercase border ${
-                            selectedUser.profile.is_eligible 
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                              : "bg-red-500/10 text-red-500 border-red-500/20"
-                          }`}>
-                            {selectedUser.profile.is_eligible ? "Eligible to Donate" : "Ineligible / Deferred"}
-                          </span>
-                        </div>
-                      )}
-                      {selectedUser.profile.health_conditions && (
-                        <div className="col-span-2">
-                          <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px]">Health Conditions / History</p>
-                          <p className="text-slate-300 mt-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-900 italic">
-                            "{selectedUser.profile.health_conditions}"
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Address Section */}
-                  {(selectedUser.profile.city || selectedUser.profile.address) && (
-                    <div className="text-xs space-y-2">
-                      <p className="text-slate-500 font-bold uppercase tracking-wide text-[9px] border-t border-slate-800 pt-3">
-                        Registered Address
-                      </p>
-                      <div className="p-3 bg-slate-950/40 border border-slate-800 rounded-xl space-y-1">
-                        {selectedUser.profile.address && <p className="text-slate-200">{selectedUser.profile.address}</p>}
-                        <p className="text-slate-400 text-[10px]">
-                          {[selectedUser.profile.city, selectedUser.profile.district, selectedUser.profile.state].filter(Boolean).join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
                 </div>
-              ) : (
-                <div className="text-center py-6 text-slate-500 text-xs border border-dashed border-slate-800 rounded-2xl">
-                  No additional profile information registered for this account.
-                </div>
-              )}
-
+              ))}
             </div>
+          </motion.div>
+        )}
 
-            {/* Footer / Actions */}
-            <div className="p-6 border-t border-slate-800 bg-slate-950/30 flex justify-between items-center gap-4">
-              <button
-                onClick={() => {
-                  deleteUser(selectedUser.id);
-                  setSelectedUser(null);
-                }}
-                className="px-4 py-2 border border-slate-800 bg-slate-900/50 hover:bg-red-950/30 hover:border-red-900 hover:text-red-400 text-slate-400 font-bold rounded-xl text-xs transition-all duration-200 cursor-pointer"
-              >
-                Delete Account
-              </button>
-
-              <div className="flex gap-2">
-                 <button
-                  onClick={() => setSelectedUser(null)}
-                  className="px-4 py-2 border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
+        {/* ================= AI TELEMETRY FORECASTS TAB ================= */}
+        {currentTab === "ai" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl"
+          >
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">AI Shortage Regression Telemetry</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-wider font-bold">
+                    <th className="pb-3">Target Date</th>
+                    <th className="pb-3 text-center">Group</th>
+                    <th className="pb-3 text-center">Hist Average</th>
+                    <th className="pb-3 text-center">Predicted Demand</th>
+                    <th className="pb-3 text-center">Available Depot</th>
+                    <th className="pb-3 text-center">Deficit</th>
+                    <th className="pb-3 text-right">Risk Factor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {forecasts.slice(0, 16).map((f, idx) => (
+                    <tr key={idx} className="hover:bg-white/[0.01]">
+                      <td className="py-3 font-mono text-slate-450">{f.date}</td>
+                      <td className="py-3 font-black text-rose-400 text-center">{f.blood_group}</td>
+                      <td className="py-3 text-slate-300 font-semibold text-center">{f.historical_avg} U</td>
+                      <td className="py-3 text-slate-300 font-semibold text-center">{f.predicted_demand} U</td>
+                      <td className="py-3 text-slate-450 text-center">{f.available_units} U</td>
+                      <td className="py-3 text-slate-400 text-center">{f.deficit_units} U</td>
+                      <td className="py-3 text-right">
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${
+                          f.shortage_risk === "High" 
+                            ? "bg-red-500/10 border-red-500/20 text-red-400" 
+                            : f.shortage_risk === "Medium"
+                              ? "bg-amber-500/10 border-amber-500/20 text-amber-450"
+                              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-450"
+                        }`}>
+                          {f.shortage_risk}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </motion.div>
+        )}
 
-          </div>
-        </div>
-      )}
+        {/* ================= SYSTEM LOGS TAB ================= */}
+        {currentTab === "logs" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl"
+          >
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-350 mb-5">System Transaction Logs</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-wider font-bold">
+                    <th className="pb-3">Log ID</th>
+                    <th className="pb-3">Action Module</th>
+                    <th className="pb-3">Timestamp Log</th>
+                    <th className="pb-3">Description Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-white/[0.01]">
+                      <td className="py-3.5 font-mono text-slate-500">#LOG-{log.id}</td>
+                      <td className="py-3.5 font-extrabold text-rose-455 uppercase tracking-wider">{log.action}</td>
+                      <td className="py-3.5 text-slate-450 font-mono">{log.created_at}</td>
+                      <td className="py-3.5 text-slate-300 leading-normal">{log.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
-

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../services/api";
 import { 
   Search, 
@@ -9,14 +10,15 @@ import {
   Heart, 
   Navigation,
   CheckCircle,
-  Eye,
   Activity,
   Database,
   Phone,
   X,
   Droplets,
   User,
-  Send
+  Send,
+  Sliders,
+  BellRing
 } from "lucide-react";
 
 /* ---------- Kakinada-area mock blood banks / donors ---------- */
@@ -107,7 +109,6 @@ export const PatientDashboard: React.FC = () => {
   const [selectedDonor, setSelectedDonor] = useState<any | null>(null);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [notifySent, setNotifySent] = useState<number | null>(null);
-  const [activeTracking, setActiveTracking] = useState<any | null>(null);
 
   const loadPatientData = async () => {
     setLoading(true);
@@ -155,6 +156,7 @@ export const PatientDashboard: React.FC = () => {
       });
       setNotifySent(donor.id);
       setTimeout(() => setNotifySent(null), 4000);
+      loadPatientData();
     } catch (err) {
       console.error(err);
       setNotifySent(donor.id);
@@ -182,356 +184,366 @@ export const PatientDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex-1 p-8 text-center text-slate-400 bg-slate-950">Loading patient portal...</div>;
+    return (
+      <div className="flex-1 p-6 md:p-8 flex items-center justify-center bg-[#050814]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Syncing Patient Portal...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-screen selection:bg-rose-500 selection:text-white bg-slate-950">
-
-      {/* ======= MAP MODAL ======= */}
-      {mapModalOpen && selectedDonor && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setMapModalOpen(false)}>
-          <div
-            className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-800">
-              <div>
-                <h3 className="font-extrabold text-slate-100 text-base">{selectedDonor.name}</h3>
-                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                  <MapPin size={11} className="text-rose-400" />
-                  {selectedDonor.address}
-                </p>
+    <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto max-h-[calc(100vh-4rem)] bg-[#050814] selection:bg-rose-500 selection:text-white">
+      
+      {/* ======= MAP OVERLAY MODAL ======= */}
+      <AnimatePresence>
+        {mapModalOpen && selectedDonor && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setMapModalOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-white/5">
+                <div>
+                  <h3 className="font-extrabold text-slate-100 text-sm tracking-wide">{selectedDonor.name}</h3>
+                  <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
+                    <MapPin size={12} className="text-rose-500 flex-shrink-0" />
+                    {selectedDonor.address}
+                  </p>
+                </div>
+                <button onClick={() => setMapModalOpen(false)} className="p-2 rounded-xl hover:bg-white/[0.03] text-slate-400 hover:text-white transition-all cursor-pointer">
+                  <X size={16} />
+                </button>
               </div>
-              <button onClick={() => setMapModalOpen(false)} className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer">
-                <X size={18} />
-              </button>
-            </div>
 
-            {/* Embedded OpenStreetMap */}
-            <div className="relative w-full" style={{ height: "320px" }}>
-              <iframe
-                title="location-map"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedDonor.lng - 0.015},${selectedDonor.lat - 0.012},${selectedDonor.lng + 0.015},${selectedDonor.lat + 0.012}&layer=mapnik&marker=${selectedDonor.lat},${selectedDonor.lng}`}
-                allowFullScreen
-              />
-              {/* Overlay badge */}
-              <div className="absolute top-3 left-3 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-xl px-3 py-1.5 text-[10px] font-bold text-rose-400 flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
-                {selectedDonor.distance} km away · Kakinada, AP
+              {/* Embedded OpenStreetMap */}
+              <div className="relative w-full" style={{ height: "300px" }}>
+                <iframe
+                  title="location-map"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }}
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedDonor.lng - 0.015},${selectedDonor.lat - 0.012},${selectedDonor.lng + 0.015},${selectedDonor.lat + 0.012}&layer=mapnik&marker=${selectedDonor.lat},${selectedDonor.lng}`}
+                  allowFullScreen
+                />
+                {/* Overlay badge */}
+                <div className="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md border border-white/10 rounded-xl px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-rose-455 flex items-center gap-1.5 shadow-lg">
+                  <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                  {selectedDonor.distance} km away
+                </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="p-5 flex items-center gap-3">
-              <div className="flex-1 text-xs text-slate-400">
-                <p className="flex items-center gap-1.5"><Phone size={12} className="text-rose-400" /> {selectedDonor.phone}</p>
-                {selectedDonor.temp && (
-                  <p className="mt-1 text-slate-500">Storage Temp: <strong className="text-slate-300">{selectedDonor.temp}°C</strong></p>
-                )}
+              {/* Modal Footer */}
+              <div className="p-5 flex flex-wrap items-center justify-between gap-4 border-t border-white/5">
+                <div className="text-[11px] text-slate-400 space-y-1">
+                  <p className="flex items-center gap-1.5"><Phone size={12} className="text-rose-500" /> {selectedDonor.phone}</p>
+                  {selectedDonor.temp && (
+                    <p className="text-slate-500 font-medium">Storage Temp: <strong className="text-slate-350">{selectedDonor.temp}°C</strong></p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={`https://www.google.com/maps?q=${selectedDonor.lat},${selectedDonor.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.04] text-slate-300 text-xs font-bold transition-all"
+                  >
+                    <Navigation size={13} />
+                    Directions
+                  </a>
+                  <button
+                    onClick={() => { handleNotifyDonor(selectedDonor); setMapModalOpen(false); }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-tr from-red-655 to-rose-600 hover:from-red-550 hover:to-rose-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/20"
+                  >
+                    <Send size={13} />
+                    Request Stock
+                  </button>
+                </div>
               </div>
-              <a
-                href={`https://www.google.com/maps?q=${selectedDonor.lat},${selectedDonor.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-800 transition-all cursor-pointer"
-              >
-                <Navigation size={14} />
-                Open in Maps
-              </a>
-              <button
-                onClick={() => { handleNotifyDonor(selectedDonor); setMapModalOpen(false); }}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-rose-600/20"
-              >
-                <Send size={14} />
-                Request Blood
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Title */}
-      <div className="flex justify-between items-center">
+      {/* Title Header Card */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight capitalize">
-            {currentTab === "dashboard" ? "Patient Care Center" : currentTab === "search" ? "Blood Locator" : "My Requests"}
+          <h2 className="text-2xl font-black text-slate-100 tracking-tight uppercase">
+            {currentTab === "dashboard" ? "Patient Command Center" : currentTab === "search" ? "Blood Search Engine" : "My Requests log"}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs text-slate-450 mt-1">
             {currentTab === "dashboard"
-              ? "Locate nearby blood banks in Kakinada, raise SOS broadcasts, and track requests."
+              ? "Triage regional centers, trigger direct SOS dispatches, and track pending matches."
               : currentTab === "search"
-              ? "Find available blood near Kakinada — click a donor card to view the location on map."
-              : "View all your raised blood requests and their current status."}
+              ? "Filter stock centers by blood group. Tap a card to inspect on maps."
+              : "Review complete audit history of requested volumes and matches."}
           </p>
         </div>
 
-        {/* SOS Emergency button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleTriggerSOS}
-          className="flex items-center gap-2 px-5 py-3.5 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-2xl shadow-xl shadow-red-600/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-red-500/20"
+          className="flex items-center gap-2 px-5 py-3.5 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded-2xl shadow-lg shadow-red-600/20 transition-all cursor-pointer border border-red-500/20 sos-pulse uppercase tracking-wider"
         >
-          <AlertTriangle size={18} />
+          <AlertTriangle size={15} />
           SOS EMERGENCY
-        </button>
+        </motion.button>
       </div>
 
       {/* ================= DASHBOARD TAB ================= */}
-      {currentTab === "dashboard" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-3 sm:gap-6">
-            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Active SOS</p>
-                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">
-                  {requests.filter((r) => r.recipient_name === "Self").length}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><AlertTriangle size={16} className="sm:w-5 sm:h-5" /></div>
-            </div>
-            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Banks Nearby</p>
-                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">{KAKINADA_DONORS.filter(d => d.available).length}</p>
-              </div>
-              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><Database size={16} className="sm:w-5 sm:h-5" /></div>
-            </div>
-            <div className="glass-panel p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Nearest</p>
-                <p className="text-xl sm:text-3xl font-black mt-1 text-rose-400">0.9 km</p>
-              </div>
-              <div className="p-2 sm:p-3.5 bg-rose-500/10 text-rose-500 rounded-lg sm:rounded-xl"><Clock size={16} className="sm:w-5 sm:h-5" /></div>
-            </div>
-          </div>
-
-          {/* Map preview — Kakinada overview */}
-          <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold flex items-center gap-2">
-                <MapPin size={15} className="text-rose-500" />
-                Blood Banks in Kakinada, Andhra Pradesh
-              </h3>
-              <span className="text-[10px] text-slate-500 font-semibold">Live Coverage Area</span>
-            </div>
-            <div style={{ height: "280px" }}>
-              <iframe
-                title="kakinada-overview"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                src="https://www.openstreetmap.org/export/embed.html?bbox=82.18,16.93,82.30,17.05&layer=mapnik&marker=16.9891,82.2475"
-                allowFullScreen
-              />
-            </div>
-          </div>
-
-          {/* Quick access donor list */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-3">
-            <h3 className="text-lg font-bold">Nearby Centres — Quick View</h3>
-            <div className="space-y-2">
-              {KAKINADA_DONORS.slice(0, 4).map((d) => (
-                <div
-                  key={d.id}
-                  onClick={() => handleOpenMap(d)}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/5 cursor-pointer transition-all text-xs group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-rose-500/10 rounded-lg text-rose-500 group-hover:bg-rose-500/20 transition-all">
-                      <Droplets size={14} />
-                    </div>
+      <AnimatePresence mode="wait">
+        {currentTab === "dashboard" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="space-y-6 animate-in fade-in"
+          >
+            {/* Quick Stat Cards - Aligned Smaller and Clean */}
+            <div className="grid grid-cols-3 gap-3 md:gap-6">
+              {[
+                { label: "Raised Requests", val: requests.filter((r) => r.recipient_name === "Self").length, icon: AlertTriangle, color: "text-rose-500" },
+                { label: "Active Centers", val: KAKINADA_DONORS.filter(d => d.available).length, icon: Database, color: "text-blue-500" },
+                { label: "Nearest Depot", val: "0.9 km", icon: Clock, color: "text-emerald-500" }
+              ].map((card, idx) => {
+                const Icon = card.icon;
+                return (
+                  <div key={idx} className="bg-slate-900/35 border border-white/5 p-3.5 md:p-5 rounded-2xl flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="font-bold text-slate-200">{d.name}</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{d.address.split(",").slice(-3).join(",")}</p>
+                      <p className="text-[9px] md:text-xs text-slate-500 font-bold uppercase tracking-wider">{card.label}</p>
+                      <p className="text-lg md:text-2xl font-black mt-1 text-slate-100">{card.val}</p>
+                    </div>
+                    <div className={`p-2 bg-white/[0.01] border border-white/5 rounded-xl ${card.color}`}>
+                      <Icon size={16} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${d.available ? "bg-emerald-500/15 text-emerald-500" : "bg-slate-800 text-slate-500"}`}>
-                      {d.available ? "Available" : "Unavailable"}
-                    </span>
-                    <span className="text-slate-500 font-mono">{d.distance} km</span>
-                    <MapPin size={14} className="text-rose-500 opacity-60 group-hover:opacity-100" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* ================= BLOOD SEARCH TAB ================= */}
-      {currentTab === "search" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* Search Form */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <Search size={18} className="text-rose-500" />
-              Search Blood Locator
-            </h3>
-            <form onSubmit={handleSearchBlood} className="space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">Required Blood Group</label>
-                <select
-                  value={searchBg}
-                  onChange={(e) => setSearchBg(e.target.value)}
-                  className="block w-full px-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-rose-500/50"
-                >
-                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                    <option key={bg} value={bg}>{bg}</option>
-                  ))}
-                </select>
+            {/* Map Frame Preview */}
+            <div className="bg-slate-900/35 border border-white/5 rounded-3xl overflow-hidden shadow-md">
+              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-slate-200">
+                  <MapPin size={14} className="text-rose-500" />
+                  Kakinada Coverage Map
+                </h3>
+                <span className="text-[9px] text-slate-550 font-black uppercase tracking-widest">Simulation Area</span>
               </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-400 uppercase tracking-wider">City / Area</label>
-                <input
-                  type="text"
-                  required
-                  value={searchCity}
-                  onChange={(e) => setSearchCity(e.target.value)}
-                  className="block w-full px-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500/50"
+              <div style={{ height: "260px" }}>
+                <iframe
+                  title="kakinada-overview"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }}
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=82.18,16.93,82.30,17.05&layer=mapnik&marker=16.9891,82.2475"
+                  allowFullScreen
                 />
               </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20"
-              >
-                <Search size={15} />
-                Search Blood Stocks
-              </button>
-            </form>
-
-            {/* Info panel */}
-            <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl text-[10px] text-slate-500 leading-relaxed">
-              💡 Click on any donor card to view the exact location on map, get contact details, and send a blood request notification directly.
             </div>
-          </div>
 
-          {/* Search Results Grid */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="glass-panel p-5 rounded-2xl border border-slate-800">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold">
-                  {searchResults.filter((r) => r.available).length} Matching Sources Found
-                </h3>
-                <span className="text-[10px] text-rose-400 font-bold px-2.5 py-1 bg-rose-500/10 rounded-lg border border-rose-500/15">
-                  Near Kakinada, AP
-                </span>
-              </div>
-
-              {notifySent && (
-                <div className="mb-4 flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-semibold animate-in zoom-in-95 duration-100">
-                  <CheckCircle size={14} />
-                  Blood request sent! The donor/bank has been notified.
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {searchResults.map((res) => (
-                  <div
-                    key={res.id}
-                    onClick={() => handleOpenMap(res)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-xl ${
-                      res.available
-                        ? "bg-slate-900/60 border-slate-800 hover:border-rose-500/40 hover:bg-rose-500/5 hover:shadow-rose-500/5"
-                        : "bg-slate-900/30 border-slate-900 opacity-60"
-                    }`}
+            {/* Nearby Quick List */}
+            <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Nearby Stocking depots</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {KAKINADA_DONORS.slice(0, 4).map((d) => (
+                  <motion.div
+                    key={d.id}
+                    whileHover={{ scale: 1.01 }}
+                    onClick={() => handleOpenMap(d)}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-rose-550/20 cursor-pointer transition-all text-xs"
                   >
-                    {/* Availability badge */}
-                    <div className={`absolute top-3 right-3 text-[9px] font-black px-2 py-0.5 rounded uppercase ${
-                      res.available ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/20" : "bg-slate-800 text-slate-500"
-                    }`}>
-                      {res.available ? "Available" : "Out of Stock"}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl">
+                        <Droplets size={14} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-200">{d.name}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">{d.address.split(",").slice(-3).join(",")}</p>
+                      </div>
                     </div>
-
-                    {/* Icon */}
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 transition-all ${
-                      res.available ? "bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/20" : "bg-slate-800 text-slate-600"
-                    }`}>
-                      {res.type === "donor" ? <User size={16} /> : <Droplets size={16} />}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-slate-500 font-mono text-[10px]">{d.distance} km</span>
+                      <MapPin size={14} className="text-rose-500 opacity-60" />
                     </div>
-
-                    <h4 className="font-extrabold text-slate-200 text-sm leading-tight pr-12">{res.name}</h4>
-                    <p className="text-[10px] text-slate-500 mt-1.5 flex items-start gap-1">
-                      <MapPin size={10} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                      {res.address}
-                    </p>
-
-                    <div className="flex gap-3 mt-3 text-[11px] text-slate-400">
-                      <span>Group: <strong className="text-rose-400 font-black">{res.blood_group}</strong></span>
-                      <span className="text-slate-700">•</span>
-                      <span>{res.distance} km away</span>
-                      {res.temp && (
-                        <>
-                          <span className="text-slate-700">•</span>
-                          <span>{res.temp}°C</span>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Hover CTA */}
-                    <div className="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                      <span className="text-[10px] text-rose-400 font-semibold flex items-center gap-1">
-                        <MapPin size={10} />
-                        View on map
-                      </span>
-                      <span className="text-slate-800">•</span>
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <Send size={10} />
-                        Request blood
-                      </span>
-                    </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {/* ================= MY REQUESTS TAB ================= */}
-      {currentTab === "requests" && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-lg font-bold">Your Raised Blood Requests</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-900 text-slate-400">
-                  <th className="pb-3 font-semibold">Request ID</th>
-                  <th className="pb-3 font-semibold">Recipient</th>
-                  <th className="pb-3 font-semibold">Blood Group</th>
-                  <th className="pb-3 font-semibold">Volume</th>
-                  <th className="pb-3 font-semibold">Emergency Facility</th>
-                  <th className="pb-3 font-semibold">Priority Score</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-900">
-                {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-900/30">
-                    <td className="py-3 font-mono text-slate-500">#REQ-{r.id}</td>
-                    <td className="py-3 font-bold text-slate-200">{r.recipient_name}</td>
-                    <td className="py-3 font-black text-rose-400">{r.blood_group}</td>
-                    <td className="py-3 text-slate-300 font-semibold">{r.units_required} Units</td>
-                    <td className="py-3 text-slate-400">{r.hospital_name}</td>
-                    <td className="py-3 font-mono font-black text-rose-400">{r.priority_score?.toFixed(1)} / 100</td>
-                  </tr>
-                ))}
-                {requests.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-slate-500">You have not raised any requests yet.</td>
-                  </tr>
+        {/* ================= BLOOD SEARCH TAB ================= */}
+        {currentTab === "search" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            {/* Search inputs */}
+            <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl space-y-5 h-fit">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <Search size={14} className="text-rose-500" />
+                Query Filter
+              </h3>
+              <form onSubmit={handleSearchBlood} className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450">Blood Group</label>
+                  <select
+                    value={searchBg}
+                    onChange={(e) => setSearchBg(e.target.value)}
+                    className="block w-full px-3 py-3 bg-slate-950 border border-white/5 rounded-xl text-slate-200 focus:outline-none focus:border-rose-500/50 cursor-pointer"
+                  >
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                      <option key={bg} value={bg}>{bg}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-455">City / Location</label>
+                  <input
+                    type="text"
+                    required
+                    value={searchCity}
+                    onChange={(e) => setSearchCity(e.target.value)}
+                    className="block w-full px-3 py-3 bg-slate-950 border border-white/5 rounded-xl text-slate-200 focus:outline-none focus:border-rose-500/50"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest text-white bg-rose-650 hover:bg-rose-600 transition-all cursor-pointer shadow-lg shadow-rose-600/20"
+                >
+                  <Search size={14} />
+                  Query Stock
+                </button>
+              </form>
+
+              <div className="p-3.5 bg-white/[0.01] border border-white/5 rounded-2xl text-[10px] text-slate-500 leading-relaxed flex gap-2">
+                <Sliders size={16} className="text-rose-500 flex-shrink-0" />
+                <span>Tap any center card to query real-time distance details and send a stock request.</span>
+              </div>
+            </div>
+
+            {/* Results Grid */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">
+                    Query Results ({searchResults.filter((r) => r.available).length})
+                  </h3>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-rose-455 px-2.5 py-1 bg-rose-500/10 rounded-lg border border-rose-500/15">
+                    {searchCity}
+                  </span>
+                </div>
+
+                {notifySent && (
+                  <div className="mb-4 flex items-center gap-2 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-450 text-xs font-semibold animate-in zoom-in-95">
+                    <CheckCircle size={14} className="text-emerald-400" />
+                    Triage alert broadcasted! The stocking center is notified.
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {searchResults.map((res) => (
+                    <motion.div
+                      key={res.id}
+                      whileHover={{ y: -2 }}
+                      onClick={() => handleOpenMap(res)}
+                      className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
+                        res.available
+                          ? "bg-white/[0.01] border-white/5 hover:border-rose-500/30 hover:bg-rose-500/5 shadow-sm"
+                          : "bg-slate-900/10 border-white/5 opacity-50"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className={`p-2 rounded-lg ${res.available ? "bg-rose-500/10 text-rose-500" : "bg-slate-800 text-slate-500"}`}>
+                          {res.type === "donor" ? <User size={15} /> : <Droplets size={15} />}
+                        </div>
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                          res.available ? "bg-emerald-500/10 text-emerald-450 border border-emerald-500/20" : "bg-slate-800 text-slate-500"
+                        }`}>
+                          {res.available ? "Available" : "Unavailable"}
+                        </span>
+                      </div>
+
+                      <h4 className="font-extrabold text-slate-200 text-xs leading-tight">{res.name}</h4>
+                      <p className="text-[10px] text-slate-500 mt-1.5 truncate">📍 {res.address}</p>
+
+                      <div className="flex gap-2.5 mt-3 text-[10px] text-slate-450 font-medium">
+                        <span>Group: <strong className="text-rose-455 font-black">{res.blood_group}</strong></span>
+                        <span>•</span>
+                        <span>{res.distance} km</span>
+                        {res.temp && (
+                          <>
+                            <span>•</span>
+                            <span>{res.temp}°C</span>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ================= MY REQUESTS TAB ================= */}
+        {currentTab === "requests" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="bg-slate-900/35 border border-white/5 p-6 rounded-3xl"
+          >
+            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-350">Active Broadcasts log</h3>
+              <span className="text-[9px] font-black bg-rose-500/10 text-rose-450 px-2 py-0.5 rounded border border-rose-500/20 uppercase tracking-widest">Patient Portal</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-white/5 text-slate-500 uppercase tracking-wider">
+                    <th className="pb-3 font-bold">Request Node</th>
+                    <th className="pb-3 font-bold">Recipient</th>
+                    <th className="pb-3 font-bold text-center">Group</th>
+                    <th className="pb-3 font-bold text-center">Volume</th>
+                    <th className="pb-3 font-bold">Facility</th>
+                    <th className="pb-3 font-bold text-right">Priority score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {requests.map((r) => (
+                    <tr key={r.id} className="hover:bg-white/[0.01]">
+                      <td className="py-3.5 font-mono text-slate-500">#REQ-{r.id}</td>
+                      <td className="py-3.5 font-bold text-slate-200">{r.recipient_name}</td>
+                      <td className="py-3.5 font-black text-rose-400 text-center">{r.blood_group}</td>
+                      <td className="py-3.5 text-slate-300 font-semibold text-center">{r.units_required} U</td>
+                      <td className="py-3.5 text-slate-400">{r.hospital_name}</td>
+                      <td className="py-3.5 font-mono font-black text-rose-450 text-right">{r.priority_score?.toFixed(1)} / 100</td>
+                    </tr>
+                  ))}
+                  {requests.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-600 font-medium">No request broadcasts raised from this terminal.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
