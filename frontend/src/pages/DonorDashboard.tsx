@@ -238,7 +238,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
             {errorMsg}
           </div>
         )}
-        <div ref={mapContainerRef} className="w-full h-full z-[1]" style={{ filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }} />
+        <div ref={mapContainerRef} className="w-full h-full z-[1]" style={{ filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }} />
       </div>
     </div>
   );
@@ -808,7 +808,7 @@ export const DonorDashboard: React.FC = () => {
                         title="profile-location-overview"
                         width="100%"
                         height="100%"
-                        style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }}
+                        style={{ border: 0, filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }}
                         src={`https://www.openstreetmap.org/export/embed.html?bbox=${(parseFloat(profile.longitude) - 0.015).toFixed(4)},${(parseFloat(profile.latitude) - 0.01).toFixed(4)},${(parseFloat(profile.longitude) + 0.015).toFixed(4)},${(parseFloat(profile.latitude) + 0.01).toFixed(4)}&layer=mapnik&marker=${profile.latitude},${profile.longitude}`}
                         allowFullScreen
                       />
