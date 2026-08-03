@@ -539,6 +539,28 @@ export const DonorDashboard: React.FC = () => {
     }
   };
 
+  const handleAcceptRequest = async (reqId: number, recipientName: string) => {
+    try {
+      await api.acceptRequest(reqId);
+      setToast({
+        message: `Life-saving donation scheduled successfully for ${recipientName}!`,
+        type: "success"
+      });
+      setActiveRequests(prev => prev.filter(r => r.id !== reqId));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to accept donation request.");
+    }
+  };
+
+  const handleDeclineRequest = (reqId: number) => {
+    setActiveRequests(prev => prev.filter(r => r.id !== reqId));
+    setToast({
+      message: "Emergency request declined.",
+      type: "info"
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center bg-[#050814]">
@@ -1301,7 +1323,8 @@ export const DonorDashboard: React.FC = () => {
                     <th className="pb-3 font-bold text-center">Group</th>
                     <th className="pb-3 font-bold text-center">Volume</th>
                     <th className="pb-3 font-bold">Hospital Facility</th>
-                    <th className="pb-3 font-bold text-right">Priority score</th>
+                    <th className="pb-3 font-bold text-center">Priority score</th>
+                    <th className="pb-3 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -1312,12 +1335,28 @@ export const DonorDashboard: React.FC = () => {
                       <td className="py-3.5 font-black text-rose-450 text-center">{r.blood_group}</td>
                       <td className="py-3.5 text-slate-300 font-semibold text-center">{r.units_required} U</td>
                       <td className="py-3.5 text-slate-400">{r.hospital_name}</td>
-                      <td className="py-3.5 font-mono font-black text-rose-450 text-right">{r.priority_score?.toFixed(1)} / 100</td>
+                      <td className="py-3.5 font-mono font-black text-rose-450 text-center">{r.priority_score?.toFixed(1)} / 100</td>
+                      <td className="py-3.5 text-right">
+                        <div className="flex justify-end gap-1.5">
+                          <button
+                            onClick={() => handleAcceptRequest(r.id, r.recipient_name)}
+                            className="px-2 py-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-450 hover:text-white border border-emerald-500/20 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleDeclineRequest(r.id)}
+                            className="px-2 py-1 bg-red-650/10 hover:bg-red-650 text-red-400 hover:text-white border border-red-500/20 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {activeRequests.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-650">No urgent matching broadcasts pending.</td>
+                      <td colSpan={7} className="py-6 text-center text-slate-650">No urgent matching broadcasts pending.</td>
                     </tr>
                   )}
                 </tbody>
