@@ -729,9 +729,9 @@ export const LandingPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-4 items-start">
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Weight (kg)</label>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 h-10 flex items-end pb-1.5">Weight (kg)</label>
                       <input
                         type="number"
                         required
@@ -743,7 +743,7 @@ export const LandingPage: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Hemoglobin (g/dL)</label>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 h-10 flex items-end pb-1.5">Hemoglobin (g/dL)</label>
                       <input
                         type="number"
                         step="0.1"
@@ -755,7 +755,7 @@ export const LandingPage: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">Last Donation (months)</label>
+                      <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 h-10 flex items-end pb-1.5">Last Donation (months)</label>
                       <input
                         type={donateNeverDonated ? "text" : "number"}
                         disabled={donateNeverDonated}
