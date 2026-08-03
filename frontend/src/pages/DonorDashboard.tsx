@@ -803,7 +803,7 @@ export const DonorDashboard: React.FC = () => {
                         Locate Me
                       </button>
                     </div>
-                    <div className="w-full h-36 rounded-2xl border border-white/5 overflow-hidden">
+                    <div className="w-full h-36 rounded-2xl border border-white/5 overflow-hidden relative group">
                       <iframe
                         title="profile-location-overview"
                         width="100%"
@@ -812,6 +812,19 @@ export const DonorDashboard: React.FC = () => {
                         src={`https://maps.google.com/maps?q=${profile.latitude},${profile.longitude}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                         allowFullScreen
                       />
+                      <div 
+                        onClick={() => {
+                          const confirmRedirect = window.confirm("Would you like to open Google Maps to view this location?");
+                          if (confirmRedirect) {
+                            window.open(`https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`, "_blank");
+                          }
+                        }}
+                        className="absolute inset-0 bg-transparent hover:bg-slate-900/10 cursor-pointer flex items-center justify-center transition-all"
+                      >
+                        <span className="opacity-0 group-hover:opacity-100 bg-slate-950/80 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border border-white/10 transition-opacity pointer-events-none">
+                          Click to View on Google Maps
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
