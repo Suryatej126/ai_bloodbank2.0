@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, ShieldCheck, HeartHandshake, Brain, Clock, MapPin, ChevronRight, Award, Play, Droplet, Heart, AlertCircle, CheckCircle2, X, Loader2 } from "lucide-react";
 import { api } from "../services/api";
@@ -11,6 +11,20 @@ export const LandingPage: React.FC = () => {
   const [showIntro, setShowIntro] = useState(!hasPlayedSessionIntro);
   const [isMuted, setIsMuted] = useState(true);
   const [fadeClass, setFadeClass] = useState("opacity-100");
+  const [videoSrc, setVideoSrc] = useState("/intro-desktop.mp4");
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setVideoSrc("/intro-mobile.mp4");
+      } else {
+        setVideoSrc("/intro-desktop.mp4");
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Modals state
   const [isDonateOpen, setIsDonateOpen] = useState(false);
@@ -140,13 +154,14 @@ export const LandingPage: React.FC = () => {
       <div className={`fixed inset-0 w-screen h-screen h-[100dvh] z-50 bg-[#c8c2b5] sm:bg-slate-950 select-none overflow-hidden ${fadeClass}`}>
         {/* Full-Screen Video (contain on mobile to prevent logo/subtitle crop, cover on desktop) */}
         <video
+          key={videoSrc}
           className="absolute inset-0 w-full h-full object-contain sm:object-cover sm:object-center"
           autoPlay
           muted={isMuted}
           playsInline
           onEnded={handleSkipIntro}
         >
-          <source src="/intro.mp4" type="video/mp4" />
+          <source src={videoSrc} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
 

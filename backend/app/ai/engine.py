@@ -379,7 +379,7 @@ def run_chatbot_query(query, current_user_role="guest", api_key=None):
     gemini_api_key = api_key or os.getenv("GEMINI_API_KEY")
     if gemini_api_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_api_key}"
             headers = {"Content-Type": "application/json"}
             system_instruction = (
                 "You are Life Care AI, the official intelligent assistant for the AI Powered Digital Blood Bank. "
