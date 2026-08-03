@@ -320,7 +320,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 z-10">
-        <div key={activeKey} className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden animate-card-flip">
+        <div key={activeKey} className="relative py-8 px-6 sm:px-10 shadow-[0_20px_50px_rgba(0,0,0,0.55)] rounded-3xl border border-white/10 backdrop-blur-2xl bg-slate-900/35 space-y-6 overflow-hidden animate-card-rotate">
           {/* Glowing border outline overlay */}
           <div className="absolute inset-0 border border-gradient-to-b from-white/10 to-transparent rounded-3xl pointer-events-none"></div>
 
