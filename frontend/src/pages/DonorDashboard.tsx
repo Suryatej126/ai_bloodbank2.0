@@ -21,7 +21,8 @@ import {
   X,
   Map,
   Trophy,
-  ActivitySquare
+  ActivitySquare,
+  Navigation
 } from "lucide-react";
 
 // Leaflet CDN dynamic loader helper
@@ -219,8 +220,9 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
         <button
           onClick={handleLocateMe}
           type="button"
-          className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 border border-white/5 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-white/5 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
         >
+          <Navigation size={10} className="animate-pulse" />
           Locate Me
         </button>
       </div>
@@ -562,6 +564,45 @@ export const DonorDashboard: React.FC = () => {
     });
   };
 
+  const handleProfileLocateMe = async () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const userPayload = {
+              full_name: profileName,
+              email: profileEmail,
+              phone: profilePhone
+            };
+            const profilePayload = {
+              ...profile,
+              latitude,
+              longitude
+            };
+            const updatedUser = await api.updateProfile(userPayload, profilePayload);
+            setProfile(updatedUser.profile);
+            setProfileLat(latitude.toString());
+            setProfileLng(longitude.toString());
+            setToast({
+              message: "Home Marker location updated to your current position!",
+              type: "success"
+            });
+          } catch (err) {
+            console.error("Failed to update profile location", err);
+            alert("Failed to update profile location.");
+          }
+        },
+        (error) => {
+          console.error("Geolocation error", error);
+          alert("Could not access current location.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center bg-[#050814]">
@@ -750,7 +791,18 @@ export const DonorDashboard: React.FC = () => {
 
                 {profile?.latitude && profile?.longitude && (
                   <div className="space-y-2">
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Home Marker Location</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Home Marker Location</span>
+                      <button
+                        onClick={handleProfileLocateMe}
+                        type="button"
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-white/5 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                        title="Locate Me"
+                      >
+                        <Navigation size={10} className="animate-pulse" />
+                        Locate Me
+                      </button>
+                    </div>
                     <div className="w-full h-36 rounded-2xl border border-white/5 overflow-hidden">
                       <iframe
                         title="profile-location-overview"

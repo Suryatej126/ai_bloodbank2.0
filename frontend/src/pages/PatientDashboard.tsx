@@ -109,6 +109,7 @@ export const PatientDashboard: React.FC = () => {
   const [selectedDonor, setSelectedDonor] = useState<any | null>(null);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [notifySent, setNotifySent] = useState<number | null>(null);
+  const [coverageMapCenter, setCoverageMapCenter] = useState({ lat: 16.9891, lng: 82.2475 });
 
   const loadPatientData = async () => {
     setLoading(true);
@@ -237,6 +238,27 @@ export const PatientDashboard: React.FC = () => {
                   <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
                   {selectedDonor.distance} km away
                 </div>
+                {/* Locate Me Float Button */}
+                <button
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const { latitude, longitude } = position.coords;
+                          alert(`Located! Your current position is: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}.`);
+                        },
+                        (error) => {
+                          console.error(error);
+                          alert("Could not access current location.");
+                        }
+                      );
+                    }
+                  }}
+                  className="absolute bottom-10 right-3 z-10 p-2 bg-slate-950/90 backdrop-blur-md border border-white/10 hover:bg-slate-800 text-rose-500 rounded-xl transition-all shadow-lg cursor-pointer flex items-center justify-center"
+                  title="Locate Me"
+                >
+                  <Navigation size={14} className="animate-pulse" />
+                </button>
               </div>
 
               {/* Modal Footer */}
@@ -335,7 +357,27 @@ export const PatientDashboard: React.FC = () => {
                   <MapPin size={14} className="text-rose-500" />
                   Kakinada Coverage Map
                 </h3>
-                <span className="text-[9px] text-slate-550 font-black uppercase tracking-widest">Simulation Area</span>
+                <button
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const { latitude, longitude } = position.coords;
+                          setCoverageMapCenter({ lat: latitude, lng: longitude });
+                        },
+                        (error) => {
+                          console.error(error);
+                          alert("Could not access current location.");
+                        }
+                      );
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-white/5 hover:bg-slate-800 text-rose-500 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                  title="Locate Me"
+                >
+                  <Navigation size={10} className="animate-pulse" />
+                  Locate Me
+                </button>
               </div>
               <div style={{ height: "260px" }}>
                 <iframe
@@ -343,7 +385,7 @@ export const PatientDashboard: React.FC = () => {
                   width="100%"
                   height="100%"
                   style={{ border: 0, filter: "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)" }}
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=82.18,16.93,82.30,17.05&layer=mapnik&marker=16.9891,82.2475"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${coverageMapCenter.lng - 0.06},${coverageMapCenter.lat - 0.05},${coverageMapCenter.lng + 0.06},${coverageMapCenter.lat + 0.05}&layer=mapnik&marker=${coverageMapCenter.lat},${coverageMapCenter.lng}`}
                   allowFullScreen
                 />
               </div>
