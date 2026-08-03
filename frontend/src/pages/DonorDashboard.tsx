@@ -94,8 +94,8 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
       mapInstance = L.map(mapContainerRef.current).setView([initialLat, initialLng], 13);
       mapRef.current = mapInstance;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap'
+      L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        attribution: '&copy; Google Maps'
       }).addTo(mapInstance);
 
       const customIcon = L.divIcon({
@@ -238,7 +238,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange }) => {
             {errorMsg}
           </div>
         )}
-        <div ref={mapContainerRef} className="w-full h-full z-[1]" style={{ filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }} />
+        <div ref={mapContainerRef} className="w-full h-full z-[1]" style={{ borderRadius: "inherit" }} />
       </div>
     </div>
   );
@@ -808,8 +808,8 @@ export const DonorDashboard: React.FC = () => {
                         title="profile-location-overview"
                         width="100%"
                         height="100%"
-                        style={{ border: 0, filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }}
-                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${(parseFloat(profile.longitude) - 0.015).toFixed(4)},${(parseFloat(profile.latitude) - 0.01).toFixed(4)},${(parseFloat(profile.longitude) + 0.015).toFixed(4)},${(parseFloat(profile.latitude) + 0.01).toFixed(4)}&layer=mapnik&marker=${profile.latitude},${profile.longitude}`}
+                        style={{ border: 0 }}
+                        src={`https://maps.google.com/maps?q=${profile.latitude},${profile.longitude}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                         allowFullScreen
                       />
                     </div>

@@ -229,8 +229,8 @@ export const PatientDashboard: React.FC = () => {
                   title="location-map"
                   width="100%"
                   height="100%"
-                  style={{ border: 0, filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }}
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedDonor.lng - 0.015},${selectedDonor.lat - 0.012},${selectedDonor.lng + 0.015},${selectedDonor.lat + 0.012}&layer=mapnik&marker=${selectedDonor.lat},${selectedDonor.lng}`}
+                  style={{ border: 0 }}
+                  src={`https://maps.google.com/maps?q=${selectedDonor.lat},${selectedDonor.lng}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                   allowFullScreen
                 />
                 {/* Overlay badge */}
@@ -384,8 +384,8 @@ export const PatientDashboard: React.FC = () => {
                   title="kakinada-overview"
                   width="100%"
                   height="100%"
-                  style={{ border: 0, filter: "grayscale(100%) invert(90%) sepia(95%) saturate(300%) hue-rotate(195deg) brightness(85%) contrast(90%)" }}
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${coverageMapCenter.lng - 0.06},${coverageMapCenter.lat - 0.05},${coverageMapCenter.lng + 0.06},${coverageMapCenter.lat + 0.05}&layer=mapnik&marker=${coverageMapCenter.lat},${coverageMapCenter.lng}`}
+                  style={{ border: 0 }}
+                  src={`https://maps.google.com/maps?q=${coverageMapCenter.lat},${coverageMapCenter.lng}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                   allowFullScreen
                 />
               </div>
