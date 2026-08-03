@@ -82,24 +82,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onClos
         {/* Brand */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => { navigate("/"); if (onClose) onClose(); }}>
-            <div className="w-9 h-9 relative flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0px 2px 4px rgba(153, 27, 27, 0.3))" }}>
-              <div 
-                className="w-full h-full"
-                style={{ 
-                  borderRadius: "0% 100% 100% 100%", 
-                  background: "radial-gradient(circle at 35% 35%, #ff4d4d 0%, #dc2626 40%, #991b1b 100%)",
-                  boxShadow: "inset -2px -2px 6px rgba(0, 0, 0, 0.4), 2px 4px 6px rgba(153, 27, 27, 0.2)",
-                  transform: "rotate(45deg)"
-                }}
-              >
-                <div className="absolute w-2.5 h-3 bg-white/70 rounded-full" style={{ top: "15%", left: "15%", transform: "rotate(-45deg)" }}></div>
-              </div>
-            </div>
-            <div>
-              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-normal py-0.5">
+            <img 
+              src="/logo.png" 
+              alt="LIFE CARE Logo" 
+              className="h-[36px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform"
+              style={{ filter: "drop-shadow(0 0 4px rgba(220,38,38,0.35))" }}
+            />
+            <div className="flex flex-col justify-center">
+              <h1 className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
                 LIFE CARE
               </h1>
-              <p className="text-[10px] text-rose-500 uppercase tracking-widest font-semibold mt-1">
+              <p className="text-[9px] text-rose-500 uppercase tracking-widest font-bold mt-1.5 leading-none">
                 ai smart blood bank
               </p>
             </div>

@@ -228,15 +228,15 @@ export const LandingPage: React.FC = () => {
           <img 
             src="/logo.png" 
             alt="LIFE CARE Logo" 
-            className="h-[52px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
+            className="h-[38px] w-auto object-contain cursor-pointer hover:scale-105 transition-transform" 
             onClick={() => navigate("/")}
             style={{ filter: "drop-shadow(0 0 6px rgba(220,38,38,0.35))" }}
           />
-          <div>
-            <h1 className="font-extrabold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-normal py-0.5">
+          <div className="flex flex-col justify-center">
+            <h1 className="font-extrabold text-[23px] text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400 leading-none">
               LIFE CARE
             </h1>
-            <p className="text-[10px] text-rose-500 uppercase tracking-widest font-semibold mt-1">
+            <p className="text-[9px] text-rose-500 uppercase tracking-widest font-bold mt-1.5 leading-none">
               ai smart blood bank
             </p>
           </div>
